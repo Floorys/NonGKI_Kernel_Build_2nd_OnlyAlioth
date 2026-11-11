@@ -8,16 +8,87 @@ on:
   workflow_dispatch:
     inputs:
       build-kernel:
-        description: 'Build Kernel ?'
+        description: "Собрать ядро? (Build Kernel)"
         required: true
         type: boolean
         default: true
 
       release-kernel:
-        description: 'Release Kernel ?'
+        description: "Выложить в Releases? (Release Kernel)"
         required: true
         type: boolean
         default: true
+
+      kernel_branch:
+        description: "Ветка ядра LineageOS (sm8250)"
+        required: true
+        type: choice
+        default: "lineage-24.0"
+        options:
+          - "lineage-24.0"
+          - "lineage-23.2"
+          - "lineage-22.2"
+          - "lineage-21"
+
+      kernelsu_fork:
+        description: "KernelSU / менеджер (с SUSFS работает только bakasu)"
+        required: true
+        type: choice
+        default: "bakasu"
+        options:
+          - "bakasu"
+          - "next"
+          - "xxksu"
+          - "rsuntk"
+          - "sukisu"
+
+      multi_manager:
+        description: "Multi-Manager (для BakaSU: BakaSU + Official KSU + KowSU)"
+        required: true
+        type: boolean
+        default: true
+
+      susfs_enable:
+        description: "Включить SUSFS (скрытие рута/модулей; работает с bakasu)"
+        required: true
+        type: boolean
+        default: true
+
+      nomount_enable:
+        description: "Включить NoMount (подмена путей без монтирования)"
+        required: true
+        type: boolean
+        default: true
+
+      bbg_enable:
+        description: "Включить Baseband Guard (BBG — защита разделов)"
+        required: true
+        type: boolean
+        default: false
+
+      bbg_boot:
+        description: "BBG: блокировать запись в boot-раздел (нужен BBG)"
+        required: true
+        type: boolean
+        default: false
+
+      rekernel_enable:
+        description: "Включить Re:Kernel (для агрессивной заморозки процессов)"
+        required: true
+        type: boolean
+        default: false
+
+      droidspaces_enable:
+        description: "Включить Droidspaces (LXC / Docker)"
+        required: true
+        type: boolean
+        default: false
+
+      disable_lto_cfi:
+        description: "Отключить LTO / CFI (быстрее сборка, для отладки)"
+        required: true
+        type: boolean
+        default: false
 
   schedule:
     - cron: '0 3 * * 3'
@@ -30,6 +101,17 @@ jobs:
     strategy:
       fail-fast: true
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.build-kernel == true)
+    with:
+      kernel_branch: ${{ inputs.kernel_branch || 'lineage-24.0' }}
+      kernelsu_fork: ${{ inputs.kernelsu_fork || 'bakasu' }}
+      multi_manager: ${{ inputs.multi_manager != false }}
+      susfs_enable: ${{ inputs.susfs_enable != false }}
+      nomount_enable: ${{ inputs.nomount_enable != false }}
+      bbg_enable: ${{ inputs.bbg_enable == true }}
+      bbg_boot: ${{ inputs.bbg_boot == true }}
+      rekernel_enable: ${{ inputs.rekernel_enable == true }}
+      droidspaces_enable: ${{ inputs.droidspaces_enable == true }}
+      disable_lto_cfi: ${{ inputs.disable_lto_cfi == true }}
 
   release-kernel:
     name: "Step Release Kernel"
@@ -42,21 +124,19 @@ jobs:
       REPO_NAME: NonGKI_Kernel_Build_2nd
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NAME: "Pre-built"
-      RELEASE_NOTES: |
-        Below is the codename reference table. Please select the image or archive you need based on this table.
-
-        | Device Name | Codename | Kernel | System | Method | KernelSU | SUSFS | Re:Kernel | BBG | NoMount |
-        |----------|----------|----------|----------|----------|----------|----------|----------|----------|----------|
-        | Xiaomi Poco F3 | alioth | 4.19 | LineageOS | AnyKernel3 | BakaSU | ✅ | ❌ | ❌ | ❌ |
-
-        - The KernelSU version is for reference only. It is normal for the KernelSU version embedded in SUSFS to be lower.
+      K_BRANCH: "${{ inputs.kernel_branch || 'lineage-24.0' }}"
+      KSU_FORK: "${{ inputs.kernelsu_fork || 'bakasu' }}"
+      MULTI_MANAGER: "${{ format('{0}', inputs.multi_manager != false) }}"
+      SUSFS_ENABLE: "${{ format('{0}', inputs.susfs_enable != false) }}"
+      NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable != false) }}"
+      BBG_ENABLE: "${{ format('{0}', inputs.bbg_enable == true) }}"
+      REKERNEL_ENABLE: "${{ format('{0}', inputs.rekernel_enable == true) }}"
+      DROIDSPACES_ENABLE: "${{ format('{0}', inputs.droidspaces_enable == true) }}"
 
     steps:
-      # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v6
 
-      # Download Artifacts
       - name: Download Artifacts
         uses: actions/download-artifact@v8
         with:
@@ -64,53 +144,61 @@ jobs:
           merge-multiple: true
           skip-decompress: true
 
-      # Get the Latest Tag from GitHub
       - name: Generate and Create New Tag
         run: |
-          # Fetch the latest tag from GitHub (this is the latest tag based on the GitHub API)
-          LATEST_TAG=$(gh api repos/$REPO_OWNER/$REPO_NAME/tags --jq '.[0].name')
-          if [ -z "$LATEST_TAG" ]; then
-            LATEST_TAG="0000000001" # if have no any releases.
-          fi
-
           NEW_TAG=$(date +%s)
-
-          # Output the new tag to be used
           echo "New tag: $NEW_TAG"
 
-          # Set the new tag as an environment variable to be used in later steps
           TIME=$(date +"%Y-%m-%d %H:%M")
           echo "TIME=$TIME" >> $GITHUB_ENV
           echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
 
-          # Create the tag in the repository
-          git tag $NEW_TAG
-          git push --tags
+          git tag "$NEW_TAG"
+          git push origin "$NEW_TAG"
 
-          # Get KernelSU version
-          git clone -b master https://github.com/backslashxx/KernelSU.git KernelSU-xxKSU
-          KSU_XXKSU_VERSION=$(cd KernelSU-xxKSU && expr $(/usr/bin/git rev-list --count HEAD) + 30000 - 82)
-          git clone -b main https://github.com/rsuntk/KernelSU.git KernelSU-rsuntk
-          KSU_RSUNTK_VERSION=$(cd KernelSU-rsuntk && expr $(/usr/bin/git rev-list --count HEAD) + 29971)
-          git clone -b builtin https://github.com/ShirkNeko/SukiSU-Ultra.git KernelSU-SukiSU-Ultra
-          KSU_SUKISU_ULTRA_VERSION=$(cd KernelSU-SukiSU-Ultra && expr $(/usr/bin/git rev-list --count HEAD) + 40000 - 2815)
-          git clone -b legacy https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
-          KSU_NEXT_VERSION=$(cd KernelSU-Next && expr $(/usr/bin/git rev-list --count HEAD) + 30000)
-          git clone -b main https://github.com/Baka-SU/BakaSU.git KernelSU-BakaSU
-          KSU_RESUKISU_VERSION=$(cd KernelSU-BakaSU && expr $(/usr/bin/git rev-list --count HEAD) + 30000 + 700)
+          mark() { [ "$1" = "true" ] && echo "✅" || echo "❌"; }
 
-          # Input release note
-          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-          echo "$RELEASE_NOTES" >> $GITHUB_ENV
-          echo "[KernelSU-xxKSU](https://github.com/backslashxx/KernelSU) Version: $KSU_XXKSU_VERSION  " >> $GITHUB_ENV
-          echo "[KernelSU-rsuntk](https://github.com/rsuntk/KernelSU) Version: $KSU_RSUNTK_VERSION  " >> $GITHUB_ENV
-          echo "[KernelSU-SukiSU-Ultra](https://github.com/ShirkNeko/SukiSU-Ultra) Version: $KSU_SUKISU_ULTRA_VERSION  " >> $GITHUB_ENV
-          echo "[KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next) Version: $KSU_NEXT_VERSION  " >> $GITHUB_ENV
-          echo "[KernelSU-BakaSU](https://github.com/Baka-SU/BakaSU) Version: $KSU_RESUKISU_VERSION  " >> $GITHUB_ENV
-          echo "[KernelSU-ReSukiSU-CI](https://github.com/cctv18/ReSukiSU_CI) Version: $KSU_RESUKISU_VERSION  " >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          KSU_INFO=""
+          case "${KSU_FORK}" in
+            xxksu)
+              git clone -b master https://github.com/backslashxx/KernelSU.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 30000 - 82)
+              KSU_INFO="[KernelSU-xxKSU](https://github.com/backslashxx/KernelSU) Version: $VER"
+              ;;
+            rsuntk)
+              git clone -b main https://github.com/rsuntk/KernelSU.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 29971)
+              KSU_INFO="[KernelSU-rsuntk](https://github.com/rsuntk/KernelSU) Version: $VER"
+              ;;
+            sukisu)
+              git clone -b builtin https://github.com/SukiSU-Ultra/SukiSU-Ultra.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 40000 - 2815)
+              KSU_INFO="[KernelSU-SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra) Version: $VER"
+              ;;
+            next)
+              git clone -b legacy https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 30000)
+              KSU_INFO="[KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next) Version: $VER"
+              ;;
+            *)
+              git clone -b main https://github.com/Baka-SU/BakaSU.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 30000 + 700)
+              KSU_INFO="[BakaSU](https://github.com/Baka-SU/BakaSU) Version: $VER (Multi-Manager: $(mark "${MULTI_MANAGER}"))"
+              ;;
+          esac
 
-      # Create GitHub Release and upload files if make_release is true
+          {
+            echo "RELEASE_NOTES<<EOF"
+            echo "Build configuration for **Xiaomi Poco F3 (\`alioth\`)**:"
+            echo ""
+            echo "| Device Name | Codename | Kernel | Branch | Method | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces |"
+            echo "|---|---|---|---|---|---|---|---|---|---|---|"
+            echo "| Xiaomi Poco F3 | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+            echo ""
+            echo "$KSU_INFO"
+            echo "EOF"
+          } >> $GITHUB_ENV
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
@@ -121,19 +209,14 @@ jobs:
 
       - name: Upload Release Assets Dynamically
         run: |
-          # Loop through all files in the downloaded-artifacts directory
           for file in ./downloaded-artifacts/*; do
-              # Skip directories
               if [ -d "$file" ]; then
                   continue
               fi
-
-              # Upload the file to the GitHub release
               echo "Uploading $file..."
               gh release upload ${{ env.NEW_TAG }} "$file"
           done
 
-      # Display Files Uploaded
       - name: Display Files Uploaded
         run: |
           echo "GitHub release created with the following files:"

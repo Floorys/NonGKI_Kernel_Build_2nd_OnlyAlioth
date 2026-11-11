@@ -2,94 +2,110 @@ name: Build Xiaomi Poco F3 (LineageOS)
 
 on:
   workflow_call:
+    inputs:
+      kernel_branch:
+        type: string
+        default: "lineage-24.0"
+      kernelsu_fork:
+        type: string
+        default: "bakasu"
+      multi_manager:
+        type: boolean
+        default: true
+      susfs_enable:
+        type: boolean
+        default: true
+      nomount_enable:
+        type: boolean
+        default: true
+      bbg_enable:
+        type: boolean
+        default: false
+      bbg_boot:
+        type: boolean
+        default: false
+      rekernel_enable:
+        type: boolean
+        default: false
+      droidspaces_enable:
+        type: boolean
+        default: false
+      disable_lto_cfi:
+        type: boolean
+        default: false
+
   workflow_dispatch:
+    inputs:
+      kernel_branch:
+        description: "Ветка ядра LineageOS (sm8250)"
+        required: true
+        type: choice
+        default: "lineage-24.0"
+        options:
+          - "lineage-24.0"
+          - "lineage-23.2"
+          - "lineage-22.2"
+          - "lineage-21"
 
-env:
-  # Device env
-  DEVICE_NAME : "poco_f3"
-  DEVICE_CODENAME : "alioth"
+      kernelsu_fork:
+        description: "KernelSU / менеджер (с SUSFS работает только bakasu)"
+        required: true
+        type: choice
+        default: "bakasu"
+        options:
+          - "bakasu"
+          - "next"
+          - "xxksu"
+          - "rsuntk"
+          - "sukisu"
 
-  CUSTOM_CMDS : "CLANG_TRIPLE=aarch64-linux-gnu-"
-  EXTRA_CMDS : "LD=ld.lld LLVM=1 LLVM_IAS=1"
+      multi_manager:
+        description: "Multi-Manager (только для BakaSU: BakaSU + Official KSU + KowSU)"
+        required: true
+        type: boolean
+        default: true
 
-  KERNEL_SOURCE : "https://github.com/LineageOS/android_kernel_xiaomi_sm8250.git"
-  KERNEL_BRANCH : "lineage-24.0" # Для других версий LineageOS: lineage-23.2, lineage-22.2 и т.д.
+      susfs_enable:
+        description: "Включить SUSFS (скрытие рута/модулей; работает с bakasu)"
+        required: true
+        type: boolean
+        default: true
 
-  CLANG_SOURCE : "https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b.git"
-  CLANG_BRANCH : "lineage-20.0"
+      nomount_enable:
+        description: "Включить NoMount (подмена путей без монтирования)"
+        required: true
+        type: boolean
+        default: true
 
-  GCC_GNU : false
-  GCC_64_SOURCE : "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9.git"
-  GCC_64_BRANCH : "android12L-release"
-  GCC_32_SOURCE : "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9.git"
-  GCC_32_BRANCH : "android12L-release"
+      bbg_enable:
+        description: "Включить Baseband Guard (BBG — защита разделов)"
+        required: true
+        type: boolean
+        default: false
 
-  DEFCONFIG_SOURCE: ""
-  DEFCONFIG_NAME : "vendor/kona-perf_defconfig"
-  DEFCONFIG_ORIGIN_IMAGE: ""
-  DEFCONFIG_FROM_BOOT: false
+      bbg_boot:
+        description: "BBG: блокировать запись в boot-раздел (нужен BBG)"
+        required: true
+        type: boolean
+        default: false
 
-  KERNELSU_SOURCE : ""
-  KERNELSU_BRANCH : ""
+      rekernel_enable:
+        description: "Включить Re:Kernel (для агрессивной заморозки процессов)"
+        required: true
+        type: boolean
+        default: false
 
-  KERNELSU_AUTO_GET : "true"
-  # ВАЖНО: В build-ready/action.yml ветка "next" (KernelSU-Next legacy) блокирует SUSFS_ENABLE=true.
-  # Для работы со встроенным SUSFS v2.4.0 на ядре 4.19 используется "bakasu" (или "sukisu").
-  # Если нужен строго KernelSU-Next без SUSFS: поставьте "next" и SUSFS_ENABLE: false.
-  KERNELSU_AUTO_FORK : "bakasu" # xxksu, rsuntk, next, bakasu, sukisu
+      droidspaces_enable:
+        description: "Включить Droidspaces (LXC / Docker)"
+        required: true
+        type: boolean
+        default: false
 
-  SUSFS_ENABLE : true
-  SUSFS_FIXED : false
-
-  AK3_SOURCE : "https://github.com/osm0sis/AnyKernel3.git"
-  AK3_BRANCH : "master"
-
-  BOOT_SOURCE : ""
-
-  NEED_DTBO : false
-  NEED_SAFE_DTBO : false
-
-  ROM_TEXT : "lineageos"
-
-  # Other env
-  PYTHON_VERSION: "3"
-
-  PACK_METHOD: "AnyKernel3"
-  PACK_KMODULES: "false"
-
-  KERNELSU_METHOD: "shell"
-
-  # Если базовый susfs_patch_to_4.19.patch даст конфликты (.rej), включите SUSFS_FIXED: true
-  # и укажите свой репозиторий с патчем susfs_fixed.patch
-  PATCHES_SOURCE: "author/source"
-  PATCHES_BRANCH: "branch"
-  SUSFS_FOLDER_FIXED: ""
-  SUSFS_PATCH_FIXED: ""
-
-  REKERNEL_ENABLE: "false"
-  DROIDSPACES_ENABLE: "false"
-  NOMOUNT_ENABLE: "false"
-
-  HOOK_METHOD: "syscall"
-
-  KPM_ENABLE: "false"
-  KPM_INLINE: "false"
-  KPM_KPATCH_NEXT: "false"
-  KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux"
-
-  BASEBAND_GUARD_ENABLE: "false"
-  BASEBAND_GUARD_BOOT: "false"
-
-  GENERATE_DTB: "false"
-  GENERATE_CHIP: "qcom"
-
-  BUILD_DEBUGGER: "false" # Включать временно на true, только если нужно выгрузить .rej при ошибке патча SUSFS
-  SKIP_PATCH: "false"
-
-  BUILD_OTHER_CONFIG: "true"
-  MERGE_CONFIG_FILES: "vendor/debugfs.config,vendor/xiaomi/sm8250-common.config,vendor/xiaomi/alioth.config"
-
-  FREE_MORE_SPACE: "false"
+      disable_lto_cfi:
+        description: "Отключить LTO / CFI (быстрее сборка, полезно при ошибках линковки)"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   build-kernel:
@@ -100,7 +116,107 @@ jobs:
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
 
+      # Device env
+      DEVICE_NAME: "poco_f3"
+      DEVICE_CODENAME: "alioth"
+
+      CUSTOM_CMDS: "CLANG_TRIPLE=aarch64-linux-gnu-"
+      EXTRA_CMDS: "LD=ld.lld LLVM=1 LLVM_IAS=1"
+
+      KERNEL_SOURCE: "https://github.com/LineageOS/android_kernel_xiaomi_sm8250.git"
+      KERNEL_BRANCH: "${{ inputs.kernel_branch || 'lineage-24.0' }}"
+
+      CLANG_SOURCE: "https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b.git"
+      CLANG_BRANCH: "lineage-20.0"
+
+      GCC_GNU: false
+      GCC_64_SOURCE: "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9.git"
+      GCC_64_BRANCH: "android12L-release"
+      GCC_32_SOURCE: "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9.git"
+      GCC_32_BRANCH: "android12L-release"
+
+      DEFCONFIG_SOURCE: ""
+      DEFCONFIG_NAME: "vendor/kona-perf_defconfig"
+      DEFCONFIG_ORIGIN_IMAGE: ""
+      DEFCONFIG_FROM_BOOT: false
+
+      KERNELSU_SOURCE: ""
+      KERNELSU_BRANCH: ""
+
+      KERNELSU_AUTO_GET: "true"
+      KERNELSU_AUTO_FORK: "${{ inputs.kernelsu_fork || 'bakasu' }}"
+      MULTI_MANAGER: "${{ format('{0}', inputs.multi_manager != false) }}"
+
+      SUSFS_ENABLE: "${{ format('{0}', inputs.susfs_enable != false) }}"
+      SUSFS_FIXED: false
+
+      AK3_SOURCE: "https://github.com/osm0sis/AnyKernel3.git"
+      AK3_BRANCH: "master"
+
+      BOOT_SOURCE: ""
+
+      NEED_DTBO: false
+      NEED_SAFE_DTBO: false
+
+      ROM_TEXT: "${{ inputs.kernel_branch || 'lineage-24.0' }}-${{ inputs.kernelsu_fork || 'bakasu' }}"
+
+      # Other env
+      PYTHON_VERSION: "3"
+
+      PACK_METHOD: "AnyKernel3"
+      PACK_KMODULES: "false"
+
+      KERNELSU_METHOD: "shell"
+
+      PATCHES_SOURCE: "author/source"
+      PATCHES_BRANCH: "branch"
+      SUSFS_FOLDER_FIXED: ""
+      SUSFS_PATCH_FIXED: ""
+
+      REKERNEL_ENABLE: "${{ format('{0}', inputs.rekernel_enable == true) }}"
+      DROIDSPACES_ENABLE: "${{ format('{0}', inputs.droidspaces_enable == true) }}"
+      NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable != false) }}"
+
+      HOOK_METHOD: "syscall"
+
+      KPM_ENABLE: "false"
+      KPM_INLINE: "false"
+      KPM_KPATCH_NEXT: "false"
+      KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux"
+
+      BASEBAND_GUARD_ENABLE: "${{ format('{0}', inputs.bbg_enable == true) }}"
+      BASEBAND_GUARD_BOOT: "${{ format('{0}', inputs.bbg_boot == true) }}"
+
+      GENERATE_DTB: "false"
+      GENERATE_CHIP: "qcom"
+
+      BUILD_DEBUGGER: "false"
+      SKIP_PATCH: "false"
+
+      BUILD_OTHER_CONFIG: "true"
+      MERGE_CONFIG_FILES: "vendor/debugfs.config,vendor/xiaomi/sm8250-common.config,vendor/xiaomi/alioth.config"
+
+      FREE_MORE_SPACE: "false"
+      DISABLE_LTO_CFI: "${{ format('{0}', inputs.disable_lto_cfi == true) }}"
+
     steps:
+      - name: 🔎 Validate Selected Options
+        run: |
+          echo "Branch:        ${{ env.KERNEL_BRANCH }}"
+          echo "KernelSU Fork: ${{ env.KERNELSU_AUTO_FORK }}"
+          echo "Multi-Manager: ${{ env.MULTI_MANAGER }}"
+          echo "SUSFS:         ${{ env.SUSFS_ENABLE }}"
+          echo "NoMount:       ${{ env.NOMOUNT_ENABLE }}"
+          echo "BBG:           ${{ env.BASEBAND_GUARD_ENABLE }} (boot lock: ${{ env.BASEBAND_GUARD_BOOT }})"
+          echo "Re:Kernel:     ${{ env.REKERNEL_ENABLE }}"
+          echo "Droidspaces:   ${{ env.DROIDSPACES_ENABLE }}"
+          echo "Disable LTO:   ${{ env.DISABLE_LTO_CFI }}"
+
+          if [[ "${{ env.SUSFS_ENABLE }}" == "true" && "${{ env.KERNELSU_AUTO_FORK }}" != "bakasu" ]]; then
+            echo "::error::SUSFS v2.4.0 в этом workflow поддерживается только с kernelsu_fork=bakasu. Выберите bakasu или снимите галочку susfs_enable."
+            exit 1
+          fi
+
       - name: ⏰ Checkout repository
         uses: actions/checkout@v6
 
@@ -120,17 +236,24 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/device_kernel
 
-          # Fix rejected hunks from susfs_patch_to_4.19.patch on LineageOS sm8250 (fs_context / mmap_lock backports)
-          patch -p1 < /tmp/Patches/Patch/poco_f3_susfs_fixed.patch
-          find . -type f \( -name "*.rej" -o -name "*.orig" \) -delete
-          sed -i 's/if (!dpath) {/if (IS_ERR(dpath)) {/' fs/notify/fdinfo.c fs/proc/fd.c
+          if [[ "${{ env.SUSFS_ENABLE }}" == "true" ]]; then
+            # Fix rejected hunks from susfs_patch_to_4.19.patch on LineageOS sm8250 (fs_context / mmap_lock backports)
+            patch -p1 < /tmp/Patches/Patch/poco_f3_susfs_fixed.patch
+            find . -type f \( -name "*.rej" -o -name "*.orig" \) -delete
+            sed -i 's/if (!dpath) {/if (IS_ERR(dpath)) {/' fs/notify/fdinfo.c fs/proc/fd.c
+          fi
 
-          # Disable -Werror from kona-perf_defconfig so KernelSU/SUSFS warnings do not abort the build
+          # Disable -Werror from kona-perf_defconfig so KernelSU/SUSFS/module warnings do not abort the build
           ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" -d CC_WERROR
 
-          # При проблемах с линковкой/CFI/нехваткой ОЗУ на раннере можно также отключить LTO/CFI:
-          # ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" \
-          #   -d LTO -d LTO_CLANG -d CFI -d CFI_PERMISSIVE -d CFI_CLANG
+          if [[ "${{ env.KERNELSU_AUTO_FORK }}" == "bakasu" && "${{ env.MULTI_MANAGER }}" != "true" ]]; then
+            ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" -d KSU_MULTI_MANAGER_SUPPORT
+          fi
+
+          if [[ "${{ env.DISABLE_LTO_CFI }}" == "true" ]]; then
+            ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" \
+              -d LTO -d LTO_CLANG -d CFI -d CFI_PERMISSIVE -d CFI_CLANG
+          fi
 
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
@@ -152,4 +275,3 @@ jobs:
 
       - name: ✏️ Upload Artifacts
         uses: ./.github/workflows/upload-files
-

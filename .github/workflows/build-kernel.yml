@@ -6,6 +6,37 @@ permissions:
 
 on:
   workflow_call:
+    inputs:
+      kernel_branch:
+        type: string
+        default: "lineage-24.0"
+      kernelsu_fork:
+        type: string
+        default: "bakasu"
+      multi_manager:
+        type: boolean
+        default: true
+      susfs_enable:
+        type: boolean
+        default: true
+      nomount_enable:
+        type: boolean
+        default: true
+      bbg_enable:
+        type: boolean
+        default: false
+      bbg_boot:
+        type: boolean
+        default: false
+      rekernel_enable:
+        type: boolean
+        default: false
+      droidspaces_enable:
+        type: boolean
+        default: false
+      disable_lto_cfi:
+        type: boolean
+        default: false
 
 jobs:
   # Xiaomi
@@ -16,3 +47,14 @@ jobs:
       fail-fast: true
     uses: ./.github/workflows/build-poco-f3-lineageos.yml
     secrets: inherit
+    with:
+      kernel_branch: ${{ inputs.kernel_branch }}
+      kernelsu_fork: ${{ inputs.kernelsu_fork }}
+      multi_manager: ${{ inputs.multi_manager }}
+      susfs_enable: ${{ inputs.susfs_enable }}
+      nomount_enable: ${{ inputs.nomount_enable }}
+      bbg_enable: ${{ inputs.bbg_enable }}
+      bbg_boot: ${{ inputs.bbg_boot }}
+      rekernel_enable: ${{ inputs.rekernel_enable }}
+      droidspaces_enable: ${{ inputs.droidspaces_enable }}
+      disable_lto_cfi: ${{ inputs.disable_lto_cfi }}
