@@ -120,6 +120,11 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/device_kernel
 
+          # Fix rejected hunks from susfs_patch_to_4.19.patch on LineageOS sm8250 (fs_context / mmap_lock backports)
+          patch -p1 < /tmp/Patches/Patch/poco_f3_susfs_fixed.patch
+          find . -type f \( -name "*.rej" -o -name "*.orig" \) -delete
+          sed -i 's/if (!dpath) {/if (IS_ERR(dpath)) {/' fs/notify/fdinfo.c fs/proc/fd.c
+
           # Disable -Werror from kona-perf_defconfig so KernelSU/SUSFS warnings do not abort the build
           ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" -d CC_WERROR
 
