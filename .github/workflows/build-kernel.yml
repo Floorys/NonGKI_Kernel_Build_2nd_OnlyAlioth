@@ -7,9 +7,15 @@ permissions:
 on:
   workflow_call:
     inputs:
+      kernel_target:
+        type: string
+        default: "both"
       kernel_branch:
         type: string
         default: "lineage-24.0"
+      e404_branch:
+        type: string
+        default: "main"
       kernelsu_fork:
         type: string
         default: "bakasu"
@@ -43,12 +49,32 @@ jobs:
   ## Poco
   build-poco-f3-lineageos:
     name: "Xiaomi Poco F3 (LineageOS)"
+    if: ${{ inputs.kernel_target == 'lineageos' || inputs.kernel_target == 'both' }}
     strategy:
       fail-fast: true
     uses: ./.github/workflows/build-poco-f3-lineageos.yml
     secrets: inherit
     with:
       kernel_branch: ${{ inputs.kernel_branch }}
+      kernelsu_fork: ${{ inputs.kernelsu_fork }}
+      multi_manager: ${{ inputs.multi_manager }}
+      susfs_enable: ${{ inputs.susfs_enable }}
+      nomount_enable: ${{ inputs.nomount_enable }}
+      bbg_enable: ${{ inputs.bbg_enable }}
+      bbg_boot: ${{ inputs.bbg_boot }}
+      rekernel_enable: ${{ inputs.rekernel_enable }}
+      droidspaces_enable: ${{ inputs.droidspaces_enable }}
+      disable_lto_cfi: ${{ inputs.disable_lto_cfi }}
+
+  build-poco-f3-e404:
+    name: "Xiaomi Poco F3 (E404)"
+    if: ${{ inputs.kernel_target == 'e404' || inputs.kernel_target == 'both' }}
+    strategy:
+      fail-fast: true
+    uses: ./.github/workflows/build-poco-f3-e404.yml
+    secrets: inherit
+    with:
+      e404_branch: ${{ inputs.e404_branch }}
       kernelsu_fork: ${{ inputs.kernelsu_fork }}
       multi_manager: ${{ inputs.multi_manager }}
       susfs_enable: ${{ inputs.susfs_enable }}

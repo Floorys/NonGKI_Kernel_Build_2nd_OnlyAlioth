@@ -19,6 +19,16 @@ on:
         type: boolean
         default: true
 
+      kernel_target:
+        description: "Какое ядро собирать?"
+        required: true
+        type: choice
+        default: "both"
+        options:
+          - "both"
+          - "e404"
+          - "lineageos"
+
       kernel_branch:
         description: "Ветка ядра LineageOS (sm8250)"
         required: true
@@ -29,6 +39,19 @@ on:
           - "lineage-23.2"
           - "lineage-22.2"
           - "lineage-21"
+
+      e404_branch:
+        description: "Ветка ядра E404 (sm8250)"
+        required: true
+        type: choice
+        default: "main"
+        options:
+          - "main"
+          - "main-bpf"
+          - "a17"
+          - "staging"
+          - "personal"
+          - "personal-test"
 
       kernelsu_fork:
         description: "KernelSU / менеджер (с SUSFS работает только bakasu)"
@@ -99,8 +122,10 @@ jobs:
       fail-fast: true
     if: inputs.build-kernel == true
     with:
-      kernel_branch: ${{ inputs.kernel_branch }}
-      kernelsu_fork: ${{ inputs.kernelsu_fork }}
+      kernel_target: ${{ inputs.kernel_target || 'both' }}
+      kernel_branch: ${{ inputs.kernel_branch || 'lineage-24.0' }}
+      e404_branch: ${{ inputs.e404_branch || 'main' }}
+      kernelsu_fork: ${{ inputs.kernelsu_fork || 'bakasu' }}
       multi_manager: ${{ inputs.multi_manager }}
       susfs_enable: ${{ inputs.susfs_enable }}
       nomount_enable: ${{ inputs.nomount_enable }}
@@ -121,11 +146,13 @@ jobs:
       REPO_NAME: NonGKI_Kernel_Build_2nd
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NAME: "Pre-built"
-      K_BRANCH: "${{ inputs.kernel_branch }}"
-      KSU_FORK: "${{ inputs.kernelsu_fork }}"
-      MULTI_MANAGER: "${{ format('{0}', inputs.multi_manager == true) }}"
-      SUSFS_ENABLE: "${{ format('{0}', inputs.susfs_enable == true) }}"
-      NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable == true) }}"
+      KERNEL_TARGET: "${{ inputs.kernel_target || 'both' }}"
+      K_BRANCH: "${{ inputs.kernel_branch || 'lineage-24.0' }}"
+      E404_BRANCH: "${{ inputs.e404_branch || 'main' }}"
+      KSU_FORK: "${{ inputs.kernelsu_fork || 'bakasu' }}"
+      MULTI_MANAGER: "${{ format('{0}', inputs.multi_manager != false) }}"
+      SUSFS_ENABLE: "${{ format('{0}', inputs.susfs_enable != false) }}"
+      NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable != false) }}"
       BBG_ENABLE: "${{ format('{0}', inputs.bbg_enable == true) }}"
       REKERNEL_ENABLE: "${{ format('{0}', inputs.rekernel_enable == true) }}"
       DROIDSPACES_ENABLE: "${{ format('{0}', inputs.droidspaces_enable == true) }}"
@@ -188,9 +215,14 @@ jobs:
             echo "RELEASE_NOTES<<EOF"
             echo "Конфигурация сборки для **Xiaomi Poco F3 (\`alioth\`)**:"
             echo ""
-            echo "| Устройство | Кодовое имя | Ядро | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces |"
+            echo "| Ядро / Источник | Кодовое имя | Версия | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces |"
             echo "|---|---|---|---|---|---|---|---|---|---|---|"
-            echo "| Xiaomi Poco F3 | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+            if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
+              echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+            fi
+            if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
+              echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+            fi
             echo ""
             echo "$KSU_INFO"
             echo "EOF"

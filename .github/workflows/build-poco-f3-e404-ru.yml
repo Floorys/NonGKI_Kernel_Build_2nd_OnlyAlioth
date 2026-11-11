@@ -1,0 +1,95 @@
+name: Сборка Xiaomi Poco F3 (E404) (RU)
+
+on:
+  workflow_dispatch:
+    inputs:
+      e404_branch:
+        description: "Ветка ядра E404 (sm8250)"
+        required: true
+        type: choice
+        default: "main"
+        options:
+          - "main"
+          - "main-bpf"
+          - "a17"
+          - "staging"
+          - "personal"
+          - "personal-test"
+
+      kernelsu_fork:
+        description: "KernelSU / менеджер (с SUSFS работает только bakasu)"
+        required: true
+        type: choice
+        default: "bakasu"
+        options:
+          - "bakasu"
+          - "next"
+          - "xxksu"
+          - "rsuntk"
+          - "sukisu"
+
+      multi_manager:
+        description: "Multi-Manager (только для BakaSU: BakaSU + Official KSU + KowSU)"
+        required: true
+        type: boolean
+        default: true
+
+      susfs_enable:
+        description: "Включить SUSFS (скрытие рута/модулей; работает с bakasu)"
+        required: true
+        type: boolean
+        default: true
+
+      nomount_enable:
+        description: "Включить NoMount (подмена путей без монтирования)"
+        required: true
+        type: boolean
+        default: true
+
+      bbg_enable:
+        description: "Включить Baseband Guard (BBG — защита разделов)"
+        required: true
+        type: boolean
+        default: false
+
+      bbg_boot:
+        description: "BBG: блокировать запись в boot-раздел (нужен BBG)"
+        required: true
+        type: boolean
+        default: false
+
+      rekernel_enable:
+        description: "Включить Re:Kernel (для агрессивной заморозки процессов)"
+        required: true
+        type: boolean
+        default: false
+
+      droidspaces_enable:
+        description: "Включить Droidspaces (LXC / Docker)"
+        required: true
+        type: boolean
+        default: false
+
+      disable_lto_cfi:
+        description: "Отключить LTO / CFI (быстрее сборка, полезно при ошибках линковки)"
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build-kernel:
+    name: Сборка Xiaomi Poco F3 (E404)
+    uses: ./.github/workflows/build-poco-f3-e404.yml
+    secrets: inherit
+    with:
+      e404_branch: ${{ inputs.e404_branch }}
+      kernelsu_fork: ${{ inputs.kernelsu_fork }}
+      multi_manager: ${{ inputs.multi_manager }}
+      susfs_enable: ${{ inputs.susfs_enable }}
+      nomount_enable: ${{ inputs.nomount_enable }}
+      bbg_enable: ${{ inputs.bbg_enable }}
+      bbg_boot: ${{ inputs.bbg_boot }}
+      rekernel_enable: ${{ inputs.rekernel_enable }}
+      droidspaces_enable: ${{ inputs.droidspaces_enable }}
+      disable_lto_cfi: ${{ inputs.disable_lto_cfi }}
+
