@@ -1,0 +1,221 @@
+name: Сборка и релиз ядра (RU)
+
+permissions:
+  contents: write
+  actions: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      build-kernel:
+        description: "Собрать ядро?"
+        required: true
+        type: boolean
+        default: true
+
+      release-kernel:
+        description: "Выложить в Releases?"
+        required: true
+        type: boolean
+        default: true
+
+      kernel_branch:
+        description: "Ветка ядра LineageOS (sm8250)"
+        required: true
+        type: choice
+        default: "lineage-24.0"
+        options:
+          - "lineage-24.0"
+          - "lineage-23.2"
+          - "lineage-22.2"
+          - "lineage-21"
+
+      kernelsu_fork:
+        description: "KernelSU / менеджер (с SUSFS работает только bakasu)"
+        required: true
+        type: choice
+        default: "bakasu"
+        options:
+          - "bakasu"
+          - "next"
+          - "xxksu"
+          - "rsuntk"
+          - "sukisu"
+
+      multi_manager:
+        description: "Multi-Manager (для BakaSU: BakaSU + Official KSU + KowSU)"
+        required: true
+        type: boolean
+        default: true
+
+      susfs_enable:
+        description: "Включить SUSFS (скрытие рута/модулей; работает с bakasu)"
+        required: true
+        type: boolean
+        default: true
+
+      nomount_enable:
+        description: "Включить NoMount (подмена путей без монтирования)"
+        required: true
+        type: boolean
+        default: true
+
+      bbg_enable:
+        description: "Включить Baseband Guard (BBG — защита разделов)"
+        required: true
+        type: boolean
+        default: false
+
+      bbg_boot:
+        description: "BBG: блокировать запись в boot-раздел (нужен BBG)"
+        required: true
+        type: boolean
+        default: false
+
+      rekernel_enable:
+        description: "Включить Re:Kernel (для агрессивной заморозки процессов)"
+        required: true
+        type: boolean
+        default: false
+
+      droidspaces_enable:
+        description: "Включить Droidspaces (LXC / Docker)"
+        required: true
+        type: boolean
+        default: false
+
+      disable_lto_cfi:
+        description: "Отключить LTO / CFI (быстрее сборка, для отладки)"
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build-kernel:
+    name: "Сборка ядра"
+    uses: ./.github/workflows/build-kernel.yml
+    secrets: inherit
+    strategy:
+      fail-fast: true
+    if: inputs.build-kernel == true
+    with:
+      kernel_branch: ${{ inputs.kernel_branch }}
+      kernelsu_fork: ${{ inputs.kernelsu_fork }}
+      multi_manager: ${{ inputs.multi_manager }}
+      susfs_enable: ${{ inputs.susfs_enable }}
+      nomount_enable: ${{ inputs.nomount_enable }}
+      bbg_enable: ${{ inputs.bbg_enable }}
+      bbg_boot: ${{ inputs.bbg_boot }}
+      rekernel_enable: ${{ inputs.rekernel_enable }}
+      droidspaces_enable: ${{ inputs.droidspaces_enable }}
+      disable_lto_cfi: ${{ inputs.disable_lto_cfi }}
+
+  release-kernel:
+    name: "Публикация релиза"
+    runs-on: ubuntu-24.04
+    needs:
+      - build-kernel
+    if: inputs.release-kernel == true
+    env:
+      REPO_OWNER: Floorys
+      REPO_NAME: NonGKI_Kernel_Build_2nd
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_NAME: "Pre-built"
+      K_BRANCH: "${{ inputs.kernel_branch }}"
+      KSU_FORK: "${{ inputs.kernelsu_fork }}"
+      MULTI_MANAGER: "${{ format('{0}', inputs.multi_manager == true) }}"
+      SUSFS_ENABLE: "${{ format('{0}', inputs.susfs_enable == true) }}"
+      NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable == true) }}"
+      BBG_ENABLE: "${{ format('{0}', inputs.bbg_enable == true) }}"
+      REKERNEL_ENABLE: "${{ format('{0}', inputs.rekernel_enable == true) }}"
+      DROIDSPACES_ENABLE: "${{ format('{0}', inputs.droidspaces_enable == true) }}"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: ./downloaded-artifacts
+          merge-multiple: true
+          skip-decompress: true
+
+      - name: Generate and Create New Tag
+        run: |
+          NEW_TAG=$(date +%s)
+          echo "New tag: $NEW_TAG"
+
+          TIME=$(date +"%Y-%m-%d %H:%M")
+          echo "TIME=$TIME" >> $GITHUB_ENV
+          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+
+          git tag "$NEW_TAG"
+          git push origin "$NEW_TAG"
+
+          mark() { [ "$1" = "true" ] && echo "✅" || echo "❌"; }
+
+          KSU_INFO=""
+          case "${KSU_FORK}" in
+            xxksu)
+              git clone -b master https://github.com/backslashxx/KernelSU.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 30000 - 82)
+              KSU_INFO="[KernelSU-xxKSU](https://github.com/backslashxx/KernelSU) Версия: $VER"
+              ;;
+            rsuntk)
+              git clone -b main https://github.com/rsuntk/KernelSU.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 29971)
+              KSU_INFO="[KernelSU-rsuntk](https://github.com/rsuntk/KernelSU) Версия: $VER"
+              ;;
+            sukisu)
+              git clone -b builtin https://github.com/SukiSU-Ultra/SukiSU-Ultra.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 40000 - 2815)
+              KSU_INFO="[KernelSU-SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra) Версия: $VER"
+              ;;
+            next)
+              git clone -b legacy https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 30000)
+              KSU_INFO="[KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next) Версия: $VER"
+              ;;
+            *)
+              git clone -b main https://github.com/Baka-SU/BakaSU.git KernelSU-tmp
+              VER=$(cd KernelSU-tmp && expr $(/usr/bin/git rev-list --count HEAD) + 30000 + 700)
+              KSU_INFO="[BakaSU](https://github.com/Baka-SU/BakaSU) Версия: $VER (Мульти-менеджер: $(mark "${MULTI_MANAGER}"))"
+              ;;
+          esac
+
+          {
+            echo "RELEASE_NOTES<<EOF"
+            echo "Конфигурация сборки для **Xiaomi Poco F3 (\`alioth\`)**:"
+            echo ""
+            echo "| Устройство | Кодовое имя | Ядро | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces |"
+            echo "|---|---|---|---|---|---|---|---|---|---|---|"
+            echo "| Xiaomi Poco F3 | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+            echo ""
+            echo "$KSU_INFO"
+            echo "EOF"
+          } >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.NEW_TAG }}
+          prerelease: false
+          release_name: "${{ env.RELEASE_NAME }} ${{ env.TIME }}"
+          body: ${{ env.RELEASE_NOTES }}
+
+      - name: Upload Release Assets Dynamically
+        run: |
+          for file in ./downloaded-artifacts/*; do
+              if [ -d "$file" ]; then
+                  continue
+              fi
+              echo "Uploading $file..."
+              gh release upload ${{ env.NEW_TAG }} "$file"
+          done
+
+      - name: Display Files Uploaded
+        run: |
+          echo "GitHub release created with the following files:"
+          ls ./downloaded-artifacts/*
+

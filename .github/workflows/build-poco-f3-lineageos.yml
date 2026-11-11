@@ -1,4 +1,4 @@
-name: Build Xiaomi Poco F3 (LineageOS)
+name: Build Xiaomi Poco F3 (LineageOS) (EN)
 
 on:
   workflow_call:
@@ -37,7 +37,7 @@ on:
   workflow_dispatch:
     inputs:
       kernel_branch:
-        description: "Ветка ядра LineageOS (sm8250)"
+        description: "LineageOS Kernel Branch (sm8250)"
         required: true
         type: choice
         default: "lineage-24.0"
@@ -48,7 +48,7 @@ on:
           - "lineage-21"
 
       kernelsu_fork:
-        description: "KernelSU / менеджер (с SUSFS работает только bakasu)"
+        description: "KernelSU Fork / Manager (only bakasu works with SUSFS)"
         required: true
         type: choice
         default: "bakasu"
@@ -60,49 +60,49 @@ on:
           - "sukisu"
 
       multi_manager:
-        description: "Multi-Manager (только для BakaSU: BakaSU + Official KSU + KowSU)"
+        description: "Multi-Manager (BakaSU only: BakaSU + Official KSU + KowSU)"
         required: true
         type: boolean
         default: true
 
       susfs_enable:
-        description: "Включить SUSFS (скрытие рута/модулей; работает с bakasu)"
+        description: "Enable SUSFS (root/module hiding; requires bakasu)"
         required: true
         type: boolean
         default: true
 
       nomount_enable:
-        description: "Включить NoMount (подмена путей без монтирования)"
+        description: "Enable NoMount (mountless path redirection)"
         required: true
         type: boolean
         default: true
 
       bbg_enable:
-        description: "Включить Baseband Guard (BBG — защита разделов)"
+        description: "Enable Baseband Guard (BBG partition protection)"
         required: true
         type: boolean
         default: false
 
       bbg_boot:
-        description: "BBG: блокировать запись в boot-раздел (нужен BBG)"
+        description: "BBG: Block writes to boot partition (requires BBG)"
         required: true
         type: boolean
         default: false
 
       rekernel_enable:
-        description: "Включить Re:Kernel (для агрессивной заморозки процессов)"
+        description: "Enable Re:Kernel (for aggressive process freezer)"
         required: true
         type: boolean
         default: false
 
       droidspaces_enable:
-        description: "Включить Droidspaces (LXC / Docker)"
+        description: "Enable Droidspaces (LXC / Docker support)"
         required: true
         type: boolean
         default: false
 
       disable_lto_cfi:
-        description: "Отключить LTO / CFI (быстрее сборка, полезно при ошибках линковки)"
+        description: "Disable LTO / CFI (faster build, troubleshooting)"
         required: true
         type: boolean
         default: false
@@ -213,7 +213,7 @@ jobs:
           echo "Disable LTO:   ${{ env.DISABLE_LTO_CFI }}"
 
           if [[ "${{ env.SUSFS_ENABLE }}" == "true" && "${{ env.KERNELSU_AUTO_FORK }}" != "bakasu" ]]; then
-            echo "::error::SUSFS v2.4.0 в этом workflow поддерживается только с kernelsu_fork=bakasu. Выберите bakasu или снимите галочку susfs_enable."
+            echo "::error::SUSFS v2.4.0 requires kernelsu_fork=bakasu (выберите bakasu или отключите susfs_enable)."
             exit 1
           fi
 

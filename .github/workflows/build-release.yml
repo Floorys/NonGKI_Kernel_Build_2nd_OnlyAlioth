@@ -1,4 +1,4 @@
-name: Build and Release Kernel
+name: Build and Release Kernel (EN)
 
 permissions:
   contents: write
@@ -8,19 +8,19 @@ on:
   workflow_dispatch:
     inputs:
       build-kernel:
-        description: "Собрать ядро? (Build Kernel)"
+        description: "Build Kernel?"
         required: true
         type: boolean
         default: true
 
       release-kernel:
-        description: "Выложить в Releases? (Release Kernel)"
+        description: "Publish to Releases?"
         required: true
         type: boolean
         default: true
 
       kernel_branch:
-        description: "Ветка ядра LineageOS (sm8250)"
+        description: "LineageOS Kernel Branch (sm8250)"
         required: true
         type: choice
         default: "lineage-24.0"
@@ -31,7 +31,7 @@ on:
           - "lineage-21"
 
       kernelsu_fork:
-        description: "KernelSU / менеджер (с SUSFS работает только bakasu)"
+        description: "KernelSU Fork / Manager (only bakasu works with SUSFS)"
         required: true
         type: choice
         default: "bakasu"
@@ -43,49 +43,49 @@ on:
           - "sukisu"
 
       multi_manager:
-        description: "Multi-Manager (для BakaSU: BakaSU + Official KSU + KowSU)"
+        description: "Multi-Manager (BakaSU only: BakaSU + Official KSU + KowSU)"
         required: true
         type: boolean
         default: true
 
       susfs_enable:
-        description: "Включить SUSFS (скрытие рута/модулей; работает с bakasu)"
+        description: "Enable SUSFS (root/module hiding; requires bakasu)"
         required: true
         type: boolean
         default: true
 
       nomount_enable:
-        description: "Включить NoMount (подмена путей без монтирования)"
+        description: "Enable NoMount (mountless path redirection)"
         required: true
         type: boolean
         default: true
 
       bbg_enable:
-        description: "Включить Baseband Guard (BBG — защита разделов)"
+        description: "Enable Baseband Guard (BBG partition protection)"
         required: true
         type: boolean
         default: false
 
       bbg_boot:
-        description: "BBG: блокировать запись в boot-раздел (нужен BBG)"
+        description: "BBG: Block writes to boot partition (requires BBG)"
         required: true
         type: boolean
         default: false
 
       rekernel_enable:
-        description: "Включить Re:Kernel (для агрессивной заморозки процессов)"
+        description: "Enable Re:Kernel (for aggressive process freezer)"
         required: true
         type: boolean
         default: false
 
       droidspaces_enable:
-        description: "Включить Droidspaces (LXC / Docker)"
+        description: "Enable Droidspaces (LXC / Docker support)"
         required: true
         type: boolean
         default: false
 
       disable_lto_cfi:
-        description: "Отключить LTO / CFI (быстрее сборка, для отладки)"
+        description: "Disable LTO / CFI (faster build, troubleshooting)"
         required: true
         type: boolean
         default: false
