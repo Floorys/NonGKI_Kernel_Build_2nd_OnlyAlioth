@@ -43,6 +43,9 @@ on:
       droidspaces_enable:
         type: boolean
         default: false
+      kpm_enable:
+        type: boolean
+        default: false
       disable_lto_cfi:
         type: boolean
         default: false
@@ -146,6 +149,12 @@ on:
         type: boolean
         default: false
 
+      kpm_enable:
+        description: "Enable KPM (Kernel Patch Module support)"
+        required: true
+        type: boolean
+        default: false
+
       disable_lto_cfi:
         description: "Disable LTO / CFI (faster build, troubleshooting)"
         required: true
@@ -226,7 +235,7 @@ jobs:
 
       HOOK_METHOD: "syscall"
 
-      KPM_ENABLE: "false"
+      KPM_ENABLE: "${{ format('{0}', inputs.kpm_enable == true) }}"
       KPM_INLINE: "false"
       KPM_KPATCH_NEXT: "false"
       KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux"
@@ -258,7 +267,15 @@ jobs:
           echo "BBG:           ${{ env.BASEBAND_GUARD_ENABLE }} (boot lock: ${{ env.BASEBAND_GUARD_BOOT }})"
           echo "Re:Kernel:     ${{ env.REKERNEL_ENABLE }}"
           echo "Droidspaces:   ${{ env.DROIDSPACES_ENABLE }}"
+          echo "KPM:           ${{ env.KPM_ENABLE }}"
           echo "Disable LTO:   ${{ env.DISABLE_LTO_CFI }}"
+
+          if [[ "${{ env.KPM_ENABLE }}" == "true" ]]; then
+            echo "::notice::Поддержка KPM (Kernel Patch Module) ВКЛЮЧЕНА в ядро (KPM enabled)"
+            echo "ROM_TEXT=${{ env.ROM_TEXT }}-kpm" >> $GITHUB_ENV
+          else
+            echo "::notice::Поддержка KPM (Kernel Patch Module) ВЫКЛЮЧЕНА (KPM disabled)"
+          fi
 
           if [[ "${{ env.SUSFS_ENABLE }}" == "true" && "${{ env.KERNELSU_AUTO_FORK }}" != "bakasu" ]]; then
             echo "::error::SUSFS v2.4.0 совместим только с 'bakasu'! Менеджеры 'next', 'xxksu', 'rsuntk', 'sukisu' НЕ поддерживают SUSFS в этом репозитории. Выберите 'bakasu' или снимите галочку SUSFS (SUSFS is incompatible with '${{ env.KERNELSU_AUTO_FORK }}', works only with 'bakasu')."
@@ -392,7 +409,7 @@ jobs:
 
       HOOK_METHOD: "syscall"
 
-      KPM_ENABLE: "false"
+      KPM_ENABLE: "${{ format('{0}', inputs.kpm_enable == true) }}"
       KPM_INLINE: "false"
       KPM_KPATCH_NEXT: "false"
       KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux"
@@ -424,7 +441,15 @@ jobs:
           echo "BBG:           ${{ env.BASEBAND_GUARD_ENABLE }} (boot lock: ${{ env.BASEBAND_GUARD_BOOT }})"
           echo "Re:Kernel:     ${{ env.REKERNEL_ENABLE }}"
           echo "Droidspaces:   ${{ env.DROIDSPACES_ENABLE }}"
+          echo "KPM:           ${{ env.KPM_ENABLE }}"
           echo "Disable LTO:   ${{ env.DISABLE_LTO_CFI }}"
+
+          if [[ "${{ env.KPM_ENABLE }}" == "true" ]]; then
+            echo "::notice::Поддержка KPM (Kernel Patch Module) ВКЛЮЧЕНА в ядро (KPM enabled)"
+            echo "ROM_TEXT=${{ env.ROM_TEXT }}-kpm" >> $GITHUB_ENV
+          else
+            echo "::notice::Поддержка KPM (Kernel Patch Module) ВЫКЛЮЧЕНА (KPM disabled)"
+          fi
 
           if [[ "${{ env.SUSFS_ENABLE }}" == "true" && "${{ env.KERNELSU_AUTO_FORK }}" != "bakasu" ]]; then
             echo "::error::SUSFS v2.4.0 совместим только с 'bakasu'! Менеджеры 'next', 'xxksu', 'rsuntk', 'sukisu' НЕ поддерживают SUSFS в этом репозитории. Выберите 'bakasu' или снимите галочку SUSFS (SUSFS is incompatible with '${{ env.KERNELSU_AUTO_FORK }}', works only with 'bakasu')."
@@ -516,6 +541,7 @@ jobs:
       BBG_ENABLE: "${{ format('{0}', inputs.bbg_enable == true) }}"
       REKERNEL_ENABLE: "${{ format('{0}', inputs.rekernel_enable == true) }}"
       DROIDSPACES_ENABLE: "${{ format('{0}', inputs.droidspaces_enable == true) }}"
+      KPM_ENABLE: "${{ format('{0}', inputs.kpm_enable == true) }}"
 
     steps:
       - name: Checkout code
@@ -576,16 +602,17 @@ jobs:
               echo "RELEASE_NOTES<<EOF"
               echo "Конфигурация сборки для **Xiaomi Poco F3 (\`alioth\`)**:"
               echo ""
-              echo "| Ядро / Источник | Кодовое имя | Версия | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces |"
-              echo "|---|---|---|---|---|---|---|---|---|---|---|"
+              echo "| Ядро / Источник | Кодовое имя | Версия | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM |"
+              echo "|---|---|---|---|---|---|---|---|---|---|---|---|"
               if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
-                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") |"
               fi
               if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
-                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") |"
               fi
               echo ""
               echo "$KSU_INFO"
+              echo "- **Поддержка KPM (Kernel Patch Module)**: $([ "${KPM_ENABLE}" = "true" ] && echo "Включена в ядро (CONFIG_KALLSYMS_ALL) ✅" || echo "Выключена ❌")"
               echo "EOF"
             } >> $GITHUB_ENV
           else
@@ -593,16 +620,17 @@ jobs:
               echo "RELEASE_NOTES<<EOF"
               echo "Build configuration for **Xiaomi Poco F3 (\`alioth\`)**:"
               echo ""
-              echo "| Kernel / Source | Codename | Kernel Ver | Branch | Method | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces |"
-              echo "|---|---|---|---|---|---|---|---|---|---|---|"
+              echo "| Kernel / Source | Codename | Kernel Ver | Branch | Method | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM |"
+              echo "|---|---|---|---|---|---|---|---|---|---|---|---|"
               if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
-                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") |"
               fi
               if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
-                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") |"
               fi
               echo ""
               echo "$KSU_INFO"
+              echo "- **KPM (Kernel Patch Module) support**: $([ "${KPM_ENABLE}" = "true" ] && echo "Enabled in kernel (CONFIG_KALLSYMS_ALL) ✅" || echo "Disabled ❌")"
               echo "EOF"
             } >> $GITHUB_ENV
           fi

@@ -101,6 +101,12 @@ on:
         type: boolean
         default: false
 
+      kpm_enable:
+        description: "Включить KPM (поддержка Kernel Patch Module)"
+        required: true
+        type: boolean
+        default: false
+
       disable_lto_cfi:
         description: "Отключить LTO / CFI (быстрее сборка, для отладки)"
         required: true
@@ -125,5 +131,6 @@ jobs:
       bbg_boot: ${{ inputs.bbg_boot }}
       rekernel_enable: ${{ inputs.rekernel_enable }}
       droidspaces_enable: ${{ inputs.droidspaces_enable }}
+      kpm_enable: ${{ inputs.kpm_enable }}
       disable_lto_cfi: ${{ inputs.disable_lto_cfi }}
       lang: "ru"

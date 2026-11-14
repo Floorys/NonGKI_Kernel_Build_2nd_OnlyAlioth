@@ -74,6 +74,7 @@
 - **Baseband Guard (`bbg_enable` / `bbg_boot`)**: защита разделов (и опциональная блокировка записи в `boot`-раздел).
 - **Re:Kernel (`rekernel_enable`)**: поддержка Re:Kernel для управления заморозкой процессов.
 - **Droidspaces (`droidspaces_enable`)**: конфиг и фиксы для контейнеров LXC / Docker.
+- **KPM (`kpm_enable`)**: включение поддержки Kernel Patch Module (`CONFIG_KALLSYMS_ALL`). Статус включения/выключения отображается в логах сборки, в имени архива (`-kpm`) и в описании GitHub Release.
 - **Disable LTO / CFI (`disable_lto_cfi`)**: отключение LTO и CFI для более быстрой сборки или отладки.
 
 ---
