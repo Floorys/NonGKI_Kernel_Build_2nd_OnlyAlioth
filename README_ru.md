@@ -50,15 +50,14 @@
 
 ### Доступные Workflow (EN и RU)
 
-В разделе **Actions** доступны отдельные сценарии на английском и русском языках:
+В репозитории оставлено ровно **2 сценария** — на английском и русском языках:
 
-| Назначение | EN | RU |
-|---|---|---|
-| Сборка и релиз (LineageOS / E404 / оба) | [build-release.yml](.github/workflows/build-release.yml) | [build-release-ru.yml](.github/workflows/build-release-ru.yml) |
-| Сборка только Poco F3 (LineageOS) | [build-poco-f3-lineageos.yml](.github/workflows/build-poco-f3-lineageos.yml) | [build-poco-f3-lineageos-ru.yml](.github/workflows/build-poco-f3-lineageos-ru.yml) |
-| Сборка только Poco F3 (E404) | [build-poco-f3-e404.yml](.github/workflows/build-poco-f3-e404.yml) | [build-poco-f3-e404-ru.yml](.github/workflows/build-poco-f3-e404-ru.yml) |
+| Сценарий | Язык | Файл | Описание |
+|---|---|---|---|
+| Build and Release Kernel (EN) | English | [build-release.yml](.github/workflows/build-release.yml) | Сборка LineageOS, E404 или обоих ядер + релиз |
+| Сборка и релиз ядра (RU) | Русский | [build-release-ru.yml](.github/workflows/build-release-ru.yml) | Сборка LineageOS, E404 или обоих ядер + релиз |
 
-- Еженедельная автосборка (`schedule`) включена только в [build-release.yml](.github/workflows/build-release.yml), чтобы не запускать дублирующие сборки.
+- Еженедельная автосборка (`schedule`) настроена в [build-release.yml](.github/workflows/build-release.yml), чтобы не запускать дублирующие сборки.
 
 ---
 
@@ -70,7 +69,7 @@
 - **Менеджер KernelSU (`kernelsu_fork`)**: `bakasu` (по умолчанию), `next`, `xxksu`, `rsuntk`, `sukisu`.
 - **Multi-Manager (`multi_manager`)**: поддержка нескольких менеджеров для **BakaSU** (`BakaSU + Official KSU + KowSU`).
 - **SUSFS (`susfs_enable`)**: встроенные патчи скрытия рута/модулей (`v2.4.0`).  
-  > Важно: SUSFS в этом пайплайне работает **только с `kernelsu_fork=bakasu`** (при несовместимой комбинации запуск остановится на проверке параметров до начала компиляции).
+  > Важно: SUSFS в этом пайплайне работает **только с `kernelsu_fork=bakasu`** и не совместим с `next`, `xxksu`, `rsuntk`, `sukisu` (при несовместимой комбинации запуск прерывается с понятной ошибкой).
 - **NoMount (`nomount_enable`)**: подмена путей без монтирования.
 - **Baseband Guard (`bbg_enable` / `bbg_boot`)**: защита разделов (и опциональная блокировка записи в `boot`-раздел).
 - **Re:Kernel (`rekernel_enable`)**: поддержка Re:Kernel для управления заморозкой процессов.
@@ -85,8 +84,8 @@
 2. Выберите нужный workflow на русском (`... (RU)`) или английском (`... (EN)`).
 3. Нажмите **Run workflow**, выберите ветку ядра, форк KernelSU и отметьте нужные модули.
 4. После завершения:
-   - при использовании `build-poco-f3-*` архив `AnyKernel3` появится в **Artifacts**;
-   - при использовании `build-release*` с включённым `release-kernel` архивы будут прикреплены к новому релизу во вкладке **Releases**.
+   - если галочка **«Выложить в Releases?»** включена, архивы `AnyKernel3` автоматически публикуются в новом релизе во вкладке **Releases**;
+   - если выключена, готовые архивы сохраняются в **Artifacts** данного запуска для тестирования.
 
 ---
 

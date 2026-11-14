@@ -5,14 +5,53 @@ permissions:
   actions: write
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      build-kernel:
-        description: "Build Kernel?"
-        required: true
+      release-kernel:
         type: boolean
         default: true
+      kernel_target:
+        type: string
+        default: "both"
+      kernel_branch:
+        type: string
+        default: "lineage-24.0"
+      e404_branch:
+        type: string
+        default: "main"
+      kernelsu_fork:
+        type: string
+        default: "bakasu"
+      multi_manager:
+        type: boolean
+        default: true
+      susfs_enable:
+        type: boolean
+        default: true
+      nomount_enable:
+        type: boolean
+        default: true
+      bbg_enable:
+        type: boolean
+        default: false
+      bbg_boot:
+        type: boolean
+        default: false
+      rekernel_enable:
+        type: boolean
+        default: false
+      droidspaces_enable:
+        type: boolean
+        default: false
+      disable_lto_cfi:
+        type: boolean
+        default: false
+      lang:
+        type: string
+        default: "en"
 
+  workflow_dispatch:
+    inputs:
       release-kernel:
         description: "Publish to Releases?"
         required: true
@@ -20,14 +59,14 @@ on:
         default: true
 
       kernel_target:
-        description: "Kernel Source to Build"
+        description: "Kernel to Build"
         required: true
         type: choice
         default: "both"
         options:
           - "both"
-          - "e404"
           - "lineageos"
+          - "e404"
 
       kernel_branch:
         description: "LineageOS Kernel Branch (sm8250)"
@@ -54,7 +93,7 @@ on:
           - "personal-test"
 
       kernelsu_fork:
-        description: "KernelSU Fork / Manager (only bakasu works with SUSFS)"
+        description: "KernelSU Fork / Manager (SUSFS is only compatible with bakasu; incompatible with: next, xxksu, rsuntk, sukisu)"
         required: true
         type: choice
         default: "bakasu"
@@ -72,7 +111,7 @@ on:
         default: true
 
       susfs_enable:
-        description: "Enable SUSFS (root/module hiding; requires bakasu)"
+        description: "Enable SUSFS (incompatible with: next, xxksu, rsuntk, sukisu — works ONLY with bakasu)"
         required: true
         type: boolean
         default: true
@@ -117,38 +156,356 @@ on:
     - cron: '0 3 * * 3'
 
 jobs:
-  build-kernel:
-    name: "Step Build Kernel"
-    uses: ./.github/workflows/build-kernel.yml
-    secrets: inherit
-    strategy:
-      fail-fast: true
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.build-kernel == true)
-    with:
-      kernel_target: ${{ inputs.kernel_target || 'both' }}
-      kernel_branch: ${{ inputs.kernel_branch || 'lineage-24.0' }}
-      e404_branch: ${{ inputs.e404_branch || 'main' }}
-      kernelsu_fork: ${{ inputs.kernelsu_fork || 'bakasu' }}
-      multi_manager: ${{ inputs.multi_manager != false }}
-      susfs_enable: ${{ inputs.susfs_enable != false }}
-      nomount_enable: ${{ inputs.nomount_enable != false }}
-      bbg_enable: ${{ inputs.bbg_enable == true }}
-      bbg_boot: ${{ inputs.bbg_boot == true }}
-      rekernel_enable: ${{ inputs.rekernel_enable == true }}
-      droidspaces_enable: ${{ inputs.droidspaces_enable == true }}
-      disable_lto_cfi: ${{ inputs.disable_lto_cfi == true }}
+  build-poco-f3-lineageos:
+    name: Xiaomi Poco F3 (LineageOS)
+    if: inputs.kernel_target == 'lineageos' || inputs.kernel_target == 'both' || github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+
+      DEVICE_NAME: "poco_f3"
+      DEVICE_CODENAME: "alioth"
+
+      CUSTOM_CMDS: "CLANG_TRIPLE=aarch64-linux-gnu-"
+      EXTRA_CMDS: "LD=ld.lld LLVM=1 LLVM_IAS=1"
+
+      KERNEL_SOURCE: "https://github.com/LineageOS/android_kernel_xiaomi_sm8250.git"
+      KERNEL_BRANCH: "${{ inputs.kernel_branch || 'lineage-24.0' }}"
+
+      CLANG_SOURCE: "https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b.git"
+      CLANG_BRANCH: "lineage-20.0"
+
+      GCC_GNU: false
+      GCC_64_SOURCE: "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9.git"
+      GCC_64_BRANCH: "android12L-release"
+      GCC_32_SOURCE: "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9.git"
+      GCC_32_BRANCH: "android12L-release"
+
+      DEFCONFIG_SOURCE: ""
+      DEFCONFIG_NAME: "vendor/kona-perf_defconfig"
+      DEFCONFIG_ORIGIN_IMAGE: ""
+      DEFCONFIG_FROM_BOOT: false
+
+      KERNELSU_SOURCE: ""
+      KERNELSU_BRANCH: ""
+
+      KERNELSU_AUTO_GET: "true"
+      KERNELSU_AUTO_FORK: "${{ inputs.kernelsu_fork || 'bakasu' }}"
+      MULTI_MANAGER: "${{ format('{0}', inputs.multi_manager != false) }}"
+
+      SUSFS_ENABLE: "${{ format('{0}', inputs.susfs_enable != false) }}"
+      SUSFS_FIXED: false
+
+      AK3_SOURCE: "https://github.com/osm0sis/AnyKernel3.git"
+      AK3_BRANCH: "master"
+
+      BOOT_SOURCE: ""
+
+      NEED_DTBO: false
+      NEED_SAFE_DTBO: false
+
+      ROM_TEXT: "${{ inputs.kernel_branch || 'lineage-24.0' }}-${{ inputs.kernelsu_fork || 'bakasu' }}"
+
+      PYTHON_VERSION: "3"
+
+      PACK_METHOD: "AnyKernel3"
+      PACK_KMODULES: "false"
+
+      KERNELSU_METHOD: "shell"
+
+      PATCHES_SOURCE: "author/source"
+      PATCHES_BRANCH: "branch"
+      SUSFS_FOLDER_FIXED: ""
+      SUSFS_PATCH_FIXED: ""
+
+      REKERNEL_ENABLE: "${{ format('{0}', inputs.rekernel_enable == true) }}"
+      DROIDSPACES_ENABLE: "${{ format('{0}', inputs.droidspaces_enable == true) }}"
+      NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable != false) }}"
+
+      HOOK_METHOD: "syscall"
+
+      KPM_ENABLE: "false"
+      KPM_INLINE: "false"
+      KPM_KPATCH_NEXT: "false"
+      KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux"
+
+      BASEBAND_GUARD_ENABLE: "${{ format('{0}', inputs.bbg_enable == true) }}"
+      BASEBAND_GUARD_BOOT: "${{ format('{0}', inputs.bbg_boot == true) }}"
+
+      GENERATE_DTB: "false"
+      GENERATE_CHIP: "qcom"
+
+      BUILD_DEBUGGER: "false"
+      SKIP_PATCH: "false"
+
+      BUILD_OTHER_CONFIG: "true"
+      MERGE_CONFIG_FILES: "vendor/debugfs.config,vendor/xiaomi/sm8250-common.config,vendor/xiaomi/alioth.config"
+
+      FREE_MORE_SPACE: "false"
+      DISABLE_LTO_CFI: "${{ format('{0}', inputs.disable_lto_cfi == true) }}"
+
+    steps:
+      - name: 🔎 Validate Selected Options
+        run: |
+          echo "Target:        LineageOS sm8250"
+          echo "Branch:        ${{ env.KERNEL_BRANCH }}"
+          echo "KernelSU Fork: ${{ env.KERNELSU_AUTO_FORK }}"
+          echo "Multi-Manager: ${{ env.MULTI_MANAGER }}"
+          echo "SUSFS:         ${{ env.SUSFS_ENABLE }}"
+          echo "NoMount:       ${{ env.NOMOUNT_ENABLE }}"
+          echo "BBG:           ${{ env.BASEBAND_GUARD_ENABLE }} (boot lock: ${{ env.BASEBAND_GUARD_BOOT }})"
+          echo "Re:Kernel:     ${{ env.REKERNEL_ENABLE }}"
+          echo "Droidspaces:   ${{ env.DROIDSPACES_ENABLE }}"
+          echo "Disable LTO:   ${{ env.DISABLE_LTO_CFI }}"
+
+          if [[ "${{ env.SUSFS_ENABLE }}" == "true" && "${{ env.KERNELSU_AUTO_FORK }}" != "bakasu" ]]; then
+            echo "::error::SUSFS v2.4.0 совместим только с 'bakasu'! Менеджеры 'next', 'xxksu', 'rsuntk', 'sukisu' НЕ поддерживают SUSFS в этом репозитории. Выберите 'bakasu' или снимите галочку SUSFS (SUSFS is incompatible with '${{ env.KERNELSU_AUTO_FORK }}', works only with 'bakasu')."
+            exit 1
+          fi
+
+      - name: ⏰ Checkout repository
+        uses: actions/checkout@v6
+
+      - name: ⌛️ Compilation environment preparation
+        uses: ./.github/workflows/build-env
+
+      - name: ⚙️ Get necessary tools
+        uses: ./.github/workflows/build-ready
+
+      - name: 🪝 Patch Kernel of SUSFS
+        uses: ./.github/workflows/patch-susfs
+
+      - name: 🔗 Patch for no-kprobe
+        uses: ./.github/workflows/patch-no-kprobe
+
+      - name: 🪛 Extra Kernel Options
+        run: |
+          cd $GITHUB_WORKSPACE/device_kernel
+
+          if [[ "${{ env.SUSFS_ENABLE }}" == "true" ]]; then
+            patch -p1 < /tmp/Patches/Patch/poco_f3_susfs_fixed.patch
+            find . -type f \( -name "*.rej" -o -name "*.orig" \) -delete
+            sed -i 's/if (!dpath) {/if (IS_ERR(dpath)) {/' fs/notify/fdinfo.c fs/proc/fd.c
+          fi
+
+          ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" -d CC_WERROR
+
+          if [[ "${{ env.KERNELSU_AUTO_FORK }}" == "bakasu" && "${{ env.MULTI_MANAGER }}" != "true" ]]; then
+            ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" -d KSU_MULTI_MANAGER_SUPPORT
+          fi
+
+          if [[ "${{ env.DISABLE_LTO_CFI }}" == "true" ]]; then
+            ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" \
+              -d LTO -d LTO_CLANG -d CFI -d CFI_PERMISSIVE -d CFI_CLANG
+          fi
+
+      - name: 🧰 Patch Kernel of Re:Kernel
+        uses: ./.github/workflows/patch-rekernel
+
+      - name: 💿 Patch Kernel of Droidspaces
+        uses: ./.github/workflows/patch-droidspaces
+
+      - name: 🔒 Patch Kernel of Baseband Guard
+        uses: ./.github/workflows/patch-baseband-guard
+
+      - name: 🛡️ Patch Kernel of NoMount
+        uses: ./.github/workflows/patch-nomount
+
+      - name: 🚀 Build Process
+        uses: ./.github/workflows/build-process
+
+      - name: 🔩 Pack Process
+        uses: ./.github/workflows/pack-process
+
+      - name: ✏️ Upload Artifacts
+        uses: ./.github/workflows/upload-files
+
+  build-poco-f3-e404:
+    name: Xiaomi Poco F3 (E404)
+    if: inputs.kernel_target == 'e404' || inputs.kernel_target == 'both' || github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+
+      DEVICE_NAME: "poco_f3"
+      DEVICE_CODENAME: "alioth"
+
+      CUSTOM_CMDS: "CLANG_TRIPLE=aarch64-linux-gnu-"
+      EXTRA_CMDS: "LD=ld.lld LLVM=1 LLVM_IAS=1"
+
+      KERNEL_SOURCE: "https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404.git"
+      KERNEL_BRANCH: "${{ inputs.e404_branch || 'main' }}"
+
+      CLANG_SOURCE: "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.3/LLVM-22.1.3-Linux-X64.tar.xz"
+      CLANG_BRANCH: ""
+
+      GCC_GNU: false
+      GCC_64_SOURCE: "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9.git"
+      GCC_64_BRANCH: "android12L-release"
+      GCC_32_SOURCE: "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9.git"
+      GCC_32_BRANCH: "android12L-release"
+
+      DEFCONFIG_SOURCE: ""
+      DEFCONFIG_NAME: "vendor/alioth_defconfig"
+      DEFCONFIG_ORIGIN_IMAGE: ""
+      DEFCONFIG_FROM_BOOT: false
+
+      KERNELSU_SOURCE: ""
+      KERNELSU_BRANCH: ""
+
+      KERNELSU_AUTO_GET: "true"
+      KERNELSU_AUTO_FORK: "${{ inputs.kernelsu_fork || 'bakasu' }}"
+      MULTI_MANAGER: "${{ format('{0}', inputs.multi_manager != false) }}"
+
+      SUSFS_ENABLE: "${{ format('{0}', inputs.susfs_enable != false) }}"
+      SUSFS_FIXED: false
+
+      AK3_SOURCE: "https://github.com/osm0sis/AnyKernel3.git"
+      AK3_BRANCH: "master"
+
+      BOOT_SOURCE: ""
+
+      NEED_DTBO: false
+      NEED_SAFE_DTBO: false
+
+      ROM_TEXT: "e404-${{ inputs.e404_branch || 'main' }}-${{ inputs.kernelsu_fork || 'bakasu' }}"
+
+      PYTHON_VERSION: "3"
+
+      PACK_METHOD: "AnyKernel3"
+      PACK_KMODULES: "false"
+
+      KERNELSU_METHOD: "shell"
+
+      PATCHES_SOURCE: "author/source"
+      PATCHES_BRANCH: "branch"
+      SUSFS_FOLDER_FIXED: ""
+      SUSFS_PATCH_FIXED: ""
+
+      REKERNEL_ENABLE: "${{ format('{0}', inputs.rekernel_enable == true) }}"
+      DROIDSPACES_ENABLE: "${{ format('{0}', inputs.droidspaces_enable == true) }}"
+      NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable != false) }}"
+
+      HOOK_METHOD: "syscall"
+
+      KPM_ENABLE: "false"
+      KPM_INLINE: "false"
+      KPM_KPATCH_NEXT: "false"
+      KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux"
+
+      BASEBAND_GUARD_ENABLE: "${{ format('{0}', inputs.bbg_enable == true) }}"
+      BASEBAND_GUARD_BOOT: "${{ format('{0}', inputs.bbg_boot == true) }}"
+
+      GENERATE_DTB: "false"
+      GENERATE_CHIP: "qcom"
+
+      BUILD_DEBUGGER: "false"
+      SKIP_PATCH: "false"
+
+      BUILD_OTHER_CONFIG: "false"
+      MERGE_CONFIG_FILES: ""
+
+      FREE_MORE_SPACE: "true"
+      DISABLE_LTO_CFI: "${{ format('{0}', inputs.disable_lto_cfi == true) }}"
+
+    steps:
+      - name: 🔎 Validate Selected Options
+        run: |
+          echo "Target:        E404 sm8250"
+          echo "Branch:        ${{ env.KERNEL_BRANCH }}"
+          echo "KernelSU Fork: ${{ env.KERNELSU_AUTO_FORK }}"
+          echo "Multi-Manager: ${{ env.MULTI_MANAGER }}"
+          echo "SUSFS:         ${{ env.SUSFS_ENABLE }}"
+          echo "NoMount:       ${{ env.NOMOUNT_ENABLE }}"
+          echo "BBG:           ${{ env.BASEBAND_GUARD_ENABLE }} (boot lock: ${{ env.BASEBAND_GUARD_BOOT }})"
+          echo "Re:Kernel:     ${{ env.REKERNEL_ENABLE }}"
+          echo "Droidspaces:   ${{ env.DROIDSPACES_ENABLE }}"
+          echo "Disable LTO:   ${{ env.DISABLE_LTO_CFI }}"
+
+          if [[ "${{ env.SUSFS_ENABLE }}" == "true" && "${{ env.KERNELSU_AUTO_FORK }}" != "bakasu" ]]; then
+            echo "::error::SUSFS v2.4.0 совместим только с 'bakasu'! Менеджеры 'next', 'xxksu', 'rsuntk', 'sukisu' НЕ поддерживают SUSFS в этом репозитории. Выберите 'bakasu' или снимите галочку SUSFS (SUSFS is incompatible with '${{ env.KERNELSU_AUTO_FORK }}', works only with 'bakasu')."
+            exit 1
+          fi
+
+      - name: ⏰ Checkout repository
+        uses: actions/checkout@v6
+
+      - name: ⌛️ Compilation environment preparation
+        uses: ./.github/workflows/build-env
+
+      - name: ⚙️ Get necessary tools
+        uses: ./.github/workflows/build-ready
+
+      - name: 🪝 Patch Kernel of SUSFS
+        uses: ./.github/workflows/patch-susfs
+
+      - name: 🔗 Patch for no-kprobe
+        uses: ./.github/workflows/patch-no-kprobe
+
+      - name: 🪛 Extra Kernel Options
+        run: |
+          rm -f "$GITHUB_WORKSPACE/clang.tar.xz"
+          cd $GITHUB_WORKSPACE/device_kernel
+
+          if [[ "${{ env.SUSFS_ENABLE }}" == "true" ]]; then
+            patch -p1 < /tmp/Patches/Patch/poco_f3_e404_susfs_fixed.patch
+            find . -type f \( -name "*.rej" -o -name "*.orig" \) -delete
+            sed -i 's/if (!dpath) {/if (IS_ERR(dpath)) {/' fs/notify/fdinfo.c fs/proc/fd.c
+          fi
+
+          ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" \
+            -d CC_WERROR -d KSU_MANUAL_HOOK -d KSU_FEATURE_ADBROOT
+
+          if [[ "${{ env.KERNELSU_AUTO_FORK }}" == "bakasu" && "${{ env.MULTI_MANAGER }}" != "true" ]]; then
+            ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" -d KSU_MULTI_MANAGER_SUPPORT
+          fi
+
+          if [[ "${{ env.DISABLE_LTO_CFI }}" == "true" ]]; then
+            ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" \
+              -d LTO -d LTO_CLANG -d LTO_CLANG_THIN -d CFI -d CFI_PERMISSIVE -d CFI_CLANG -e LTO_NONE
+          fi
+
+      - name: 🧰 Patch Kernel of Re:Kernel
+        uses: ./.github/workflows/patch-rekernel
+
+      - name: 💿 Patch Kernel of Droidspaces
+        uses: ./.github/workflows/patch-droidspaces
+
+      - name: 🔒 Patch Kernel of Baseband Guard
+        uses: ./.github/workflows/patch-baseband-guard
+
+      - name: 🛡️ Patch Kernel of NoMount
+        uses: ./.github/workflows/patch-nomount
+
+      - name: 🚀 Build Process
+        uses: ./.github/workflows/build-process
+
+      - name: 🔩 Pack Process
+        uses: ./.github/workflows/pack-process
+
+      - name: ✏️ Upload Artifacts
+        uses: ./.github/workflows/upload-files
 
   release-kernel:
     name: "Step Release Kernel"
     runs-on: ubuntu-24.04
     needs:
-      - build-kernel
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.release-kernel == true)
+      - build-poco-f3-lineageos
+      - build-poco-f3-e404
+    if: |
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
+      (inputs.release-kernel != false) &&
+      (needs.build-poco-f3-lineageos.result == 'success' || needs.build-poco-f3-e404.result == 'success')
     env:
-      REPO_OWNER: Floorys
-      REPO_NAME: NonGKI_Kernel_Build_2nd
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NAME: "Pre-built"
+      LANG_OPT: "${{ inputs.lang || 'en' }}"
       KERNEL_TARGET: "${{ inputs.kernel_target || 'both' }}"
       K_BRANCH: "${{ inputs.kernel_branch || 'lineage-24.0' }}"
       E404_BRANCH: "${{ inputs.e404_branch || 'main' }}"
@@ -214,22 +571,41 @@ jobs:
               ;;
           esac
 
-          {
-            echo "RELEASE_NOTES<<EOF"
-            echo "Build configuration for **Xiaomi Poco F3 (\`alioth\`)**:"
-            echo ""
-            echo "| Kernel / Source | Codename | Kernel Ver | Branch | Method | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces |"
-            echo "|---|---|---|---|---|---|---|---|---|---|---|"
-            if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
-              echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
-            fi
-            if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
-              echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
-            fi
-            echo ""
-            echo "$KSU_INFO"
-            echo "EOF"
-          } >> $GITHUB_ENV
+          if [[ "${LANG_OPT}" == "ru" ]]; then
+            {
+              echo "RELEASE_NOTES<<EOF"
+              echo "Конфигурация сборки для **Xiaomi Poco F3 (\`alioth\`)**:"
+              echo ""
+              echo "| Ядро / Источник | Кодовое имя | Версия | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces |"
+              echo "|---|---|---|---|---|---|---|---|---|---|---|"
+              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
+                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+              fi
+              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
+                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+              fi
+              echo ""
+              echo "$KSU_INFO"
+              echo "EOF"
+            } >> $GITHUB_ENV
+          else
+            {
+              echo "RELEASE_NOTES<<EOF"
+              echo "Build configuration for **Xiaomi Poco F3 (\`alioth\`)**:"
+              echo ""
+              echo "| Kernel / Source | Codename | Kernel Ver | Branch | Method | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces |"
+              echo "|---|---|---|---|---|---|---|---|---|---|---|"
+              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
+                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+              fi
+              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
+                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") |"
+              fi
+              echo ""
+              echo "$KSU_INFO"
+              echo "EOF"
+            } >> $GITHUB_ENV
+          fi
 
       - name: Create GitHub Release
         uses: actions/create-release@v1

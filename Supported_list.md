@@ -7,16 +7,18 @@
 - This fork exclusively supports **Xiaomi Poco F3 (`alioth`)**. All other upstream device workflows were removed.
 - **LineageOS (`sm8250`)**: supports branches `lineage-24.0`, `lineage-23.2`, `lineage-22.2`, and `lineage-21`, compiled with AOSP Clang (`lineage-20.0`).
 - **E404 (`sm8250`)**: supports branches `main`, `main-bpf`, `a17`, `staging`, `personal`, and `personal-test`, compiled with LLVM/Clang `22.1.3` (`LD=ld.lld LLVM=1 LLVM_IAS=1`).
-- Every workflow is available in both **EN** and **RU** variants and exposes interactive `workflow_dispatch` toggles:
+- Available in two workflows: **EN** ([`build-release.yml`](.github/workflows/build-release.yml)) and **RU** ([`build-release-ru.yml`](.github/workflows/build-release-ru.yml)), with interactive `workflow_dispatch` toggles:
+  - Kernel target: `both`, `lineageos`, or `e404`
   - KernelSU fork (`bakasu`, `next`, `xxksu`, `rsuntk`, `sukisu`) and BakaSU `Multi-Manager`
-  - `SUSFS` (inline hooks; requires `kernelsu_fork=bakasu`), `NoMount`, `Baseband Guard (BBG)` (+ optional boot partition write block), `Re:Kernel`, `Droidspaces` (LXC/Docker), and `Disable LTO/CFI`.
-- Combined `Build and Release Kernel` (`build-release.yml` / `build-release-ru.yml`) can build `lineageos`, `e404`, or `both` in one run and publish directly to GitHub Releases.
+  - `SUSFS` (inline hooks for `bakasu`; incompatible with: `next`, `xxksu`, `rsuntk`, `sukisu`), `NoMount`, `Baseband Guard (BBG)` (+ optional boot partition write block), `Re:Kernel`, `Droidspaces` (LXC/Docker), and `Disable LTO/CFI`.
+  - Optional publishing directly to GitHub Releases.
 
 **Русский**:
 - Этот форк поддерживает только **Xiaomi Poco F3 (`alioth`)** — все остальные устройства из оригинального репозитория удалены.
 - **LineageOS (`sm8250`)**: ветки `lineage-24.0`, `lineage-23.2`, `lineage-22.2`, `lineage-21`, сборка через AOSP Clang (`lineage-20.0`).
 - **E404 (`sm8250`)**: ветки `main`, `main-bpf`, `a17`, `staging`, `personal`, `personal-test`, сборка через LLVM/Clang `22.1.3` (`LD=ld.lld LLVM=1 LLVM_IAS=1`).
-- Все workflow доступны в двух версиях — **EN** и **RU**, с интерактивными галочками при запуске:
+- Доступно всего **2 сценария**: на английском ([`build-release.yml`](.github/workflows/build-release.yml)) и русском ([`build-release-ru.yml`](.github/workflows/build-release-ru.yml)) языках с интерактивными параметрами при запуске:
+  - Выбор ядра: `both`, `lineageos` или `e404`
   - Выбор KernelSU (`bakasu`, `next`, `xxksu`, `rsuntk`, `sukisu`) и `Multi-Manager` (для BakaSU)
-  - `SUSFS` (работает только с `bakasu`), `NoMount`, `Baseband Guard (BBG)` (+ опциональная блокировка записи в `boot`), `Re:Kernel`, `Droidspaces` (LXC/Docker) и отключение `LTO/CFI`.
-- Общий релизный workflow (`build-release.yml` / `build-release-ru.yml`) позволяет собрать `lineageos`, `e404` или оба ядра (`both`) и сразу выложить в GitHub Releases.
+  - `SUSFS` (для `bakasu`; не совместим с: `next`, `xxksu`, `rsuntk`, `sukisu`), `NoMount`, `Baseband Guard (BBG)` (+ опциональная блокировка записи в `boot`), `Re:Kernel`, `Droidspaces` (LXC/Docker) и отключение `LTO/CFI`.
+  - Опциональная публикация собранного ядра сразу в GitHub Releases.
