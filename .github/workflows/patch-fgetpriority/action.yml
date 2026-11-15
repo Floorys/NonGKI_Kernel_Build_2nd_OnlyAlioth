@@ -9,11 +9,14 @@ runs:
         run: |
           cd $GITHUB_WORKSPACE/device_kernel/
 
-          if ! grep -q "drivers/fgetpriority/Kconfig" "drivers/Kconfig"; then
-            git clone https://github.com/aerath-stuff/fgetpriority.git fgetpriority
-            ln -sfn ../fgetpriority/kernel drivers/fgetpriority
-            grep -q "fgetpriority" drivers/Makefile || echo 'obj-$(CONFIG_FGETPRIORITY) += fgetpriority/kernel/' >> drivers/Makefile
-            sed -i '/endmenu/i source "drivers/fgetpriority/kernel/Kconfig"' drivers/Kconfig
+          if ! grep -q "CONFIG_FGETPRIORITY" "./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" 2>/dev/null; then
+            rm -rf fgetpriority-tmp drivers/fgetpriority
+            git clone --depth=1 https://github.com/aerath-stuff/fgetpriority.git fgetpriority-tmp
+            cp -r fgetpriority-tmp/kernel drivers/fgetpriority
+            rm -rf fgetpriority-tmp
+
+            grep -q "fgetpriority" drivers/Makefile || echo 'obj-$(CONFIG_FGETPRIORITY) += fgetpriority/' >> drivers/Makefile
+            grep -q "drivers/fgetpriority/Kconfig" drivers/Kconfig || sed -i '/endmenu/i source "drivers/fgetpriority/Kconfig"' drivers/Kconfig
 
             echo "CONFIG_FGETPRIORITY=y" >> ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
 
