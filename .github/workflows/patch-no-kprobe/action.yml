@@ -56,6 +56,11 @@ runs:
 
             sed -i 's/static void security_dump_masked_av(struct policydb \*policydb,/void security_dump_masked_av(struct policydb *policydb,/' security/selinux/ss/services.c
 
+            # Provide fallback stub when CONFIG_AUDIT is not enabled in defconfig
+            if ! grep -q "security_dump_masked_av_audit_stub" "security/selinux/ss/services.c" 2>/dev/null; then
+                printf '\n/* security_dump_masked_av_audit_stub: fallback when CONFIG_AUDIT is disabled */\n#ifndef CONFIG_AUDIT\nvoid security_dump_masked_av(struct policydb *policydb, struct context *scontext, struct context *tcontext, u16 tclass, u32 permissions, const char *reason) {}\n#endif\n' >> security/selinux/ss/services.c
+            fi
+
             sed -i 's/static void context_struct_compute_av(struct policydb \*policydb,/void context_struct_compute_av(struct policydb *policydb,/' security/selinux/ss/services.c
 
             echo "[+] Removed write_op, sel_handle_status_ops, security_dump_masked_av and context_struct_compute_av static state."
