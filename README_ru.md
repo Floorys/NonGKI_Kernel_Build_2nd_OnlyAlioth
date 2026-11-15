@@ -111,6 +111,8 @@
 - [Baseband Guard](https://github.com/vc-teahouse/Baseband-guard) - @秋刀鱼
 - [Droidspaces](https://github.com/ravindu644/Droidspaces-OSS) - @ravindu644
 - [NoMount](https://github.com/maxsteeel/nomount) - @maxsteeel
+- [fgetpriority](https://github.com/aerath-stuff/fgetpriority) - @aerath-stuff
+- [VPNHide Next](https://github.com/soranerai/vpnhide_next) - @soranerai
 - [AnyKernel3](https://github.com/osm0sis/AnyKernel3) - @osm0sis
 - Авторы ядер: [LineageOS](https://github.com/LineageOS/android_kernel_xiaomi_sm8250), [@kvsnr113](https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404)
 
