@@ -7,6 +7,11 @@ runs:
         if: env.DROIDSPACES_ENABLE == 'true'
         shell: bash
         run: |
+          if ! command -v spatch >/dev/null 2>&1; then
+            echo "[+] Installing coccinelle..."
+            sudo apt-get update && sudo apt-get install -y coccinelle || true
+          fi
+
           cd $GITHUB_WORKSPACE/device_kernel/
           cp /tmp/Patches/Droidspaces/droidspaces.config ./arch/"${{ env.KERNEL_ARCH }}"/configs/
 

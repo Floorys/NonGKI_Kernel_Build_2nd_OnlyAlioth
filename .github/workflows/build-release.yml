@@ -704,23 +704,11 @@ jobs:
             } >> $GITHUB_ENV
           fi
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ env.NEW_TAG }}
-          prerelease: false
-          release_name: "${{ env.RELEASE_NAME }} ${{ env.TIME }}"
-          body: ${{ env.RELEASE_NOTES }}
-
-      - name: Upload Release Assets Dynamically
+      - name: Create GitHub Release and Upload Assets
         run: |
-          for file in ./downloaded-artifacts/*; do
-              if [ -d "$file" ]; then
-                  continue
-              fi
-              echo "Uploading $file..."
-              gh release upload ${{ env.NEW_TAG }} "$file"
-          done
+          gh release create "${{ env.NEW_TAG }}" ./downloaded-artifacts/* \
+            --title "${{ env.RELEASE_NAME }} ${{ env.TIME }}" \
+            --notes "${{ env.RELEASE_NOTES }}"
 
       - name: Display Files Uploaded
         run: |

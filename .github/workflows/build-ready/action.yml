@@ -284,7 +284,7 @@ runs:
 
           }
 
-          if [[ "${{ env.KERNELSU_SOURCE }}" == *SukiSU* ]] || [[ "${{ env.KERNELSU_AUTO_FORK }}" == "sukisu" ]] && [[ "${{ env.KPM_INLINE }}" == "true" ]]; then
+          if [[ ( "${{ env.KERNELSU_SOURCE }}" == *SukiSU* || "${{ env.KERNELSU_AUTO_FORK }}" == "sukisu" ) && "${{ env.KPM_INLINE }}" == "true" ]]; then
             echo "[+] Detected SukiSU-Ultra and enabled KPM Inline."
             ENABLE_KPM_CONFIGS
 
@@ -300,8 +300,8 @@ runs:
 
             fi
 
-          elif [[ "${{ env.KERNELSU_SOURCE }}" != *SukiSU* ]] || [[ "${{ env.KERNELSU_AUTO_FORK }}" != "sukisu" ]] && [[ "${{ env.KPM_INLINE }}" == "true" ]]; then
-            echo "[-] Your KernelSU Fork could not support KPM Inline!"
+          elif [[ "${{ env.KPM_INLINE }}" == "true" ]]; then
+            echo "[-] Your KernelSU Fork does not support KPM Inline!"
             false
 
           elif [[ "${{ env.KPM_KPATCH_NEXT }}" == "true" ]]; then

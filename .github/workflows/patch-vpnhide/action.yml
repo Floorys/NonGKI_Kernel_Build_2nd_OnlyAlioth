@@ -10,7 +10,7 @@ runs:
           cd $GITHUB_WORKSPACE/device_kernel/
 
           if ! grep -q "CONFIG_VPNHIDE" "./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" 2>/dev/null; then
-            git clone https://github.com/soranerai/vpnhide_next_backend.git vpnhide
+            git clone --depth=1 https://github.com/soranerai/vpnhide_next_backend.git vpnhide
             chmod +x vpnhide/kpatch/scripts/apply.sh
 
             if [[ "${{ env.KERNEL_VERSION }}" == "5.4" ]]; then
@@ -25,6 +25,7 @@ runs:
 
             fi
 
+            rm -rf vpnhide
             echo "CONFIG_VPNHIDE=y" >> ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
 
             echo "[+] Patched VPNHide for your kernel successfully."

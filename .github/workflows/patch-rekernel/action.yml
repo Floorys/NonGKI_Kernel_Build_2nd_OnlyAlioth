@@ -15,7 +15,7 @@ runs:
             bash rekernel_patches.sh
 
             cp /tmp/Patches/Rekernel/rekernel_extra.patch ./
-            patch -p1 < rekernel_extra.patch || true
+            patch -p1 < rekernel_extra.patch
 
             echo "CONFIG_REKERNEL=y" >> ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
 

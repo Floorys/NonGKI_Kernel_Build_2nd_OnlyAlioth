@@ -27,7 +27,7 @@ runs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2.22
         with:
-          key: build-kernel-${{ env.DEVICE_NAME }}${{ env.UPLOADNAME }}
+          key: build-kernel-${{ env.DEVICE_NAME }}-${{ env.ROM_TEXT }}
           max-size: 2G
 
       - name: Build Kernel
@@ -100,12 +100,12 @@ runs:
           fi
 
           # KPM Detect
-          if [[ "${{ env.KPM_ENABLE }}" == "true" ]] && [[ "${{ env.KPM_INLINE }}" == "true" ]]; then
+          if [[ "${{ env.KPM_ENABLE }}" == "true" ]]; then
             if grep -q "CONFIG_KALLSYMS_ALL=y" "out/.config"; then
                 sed -i 's/# CONFIG_KPM is not set/CONFIG_KPM=y/' out/.config
                 echo "[+] Enabled KPM."
             else
-                echo "[-] Your didn't enabled KALLSYMS_ALL."
+                echo "[-] You didn't enable KALLSYMS_ALL."
             fi
 
             if grep -q "CONFIG_KPM=y" "out/.config"; then
@@ -247,7 +247,7 @@ runs:
           bash pack_error_files.sh
 
       - name: KPM Patcher (Experiment)
-        if: env.KPM_ENABLE == 'true' && env.KPM_INLINE == 'true' || env.KPM_KPATCH_NEXT == 'true'
+        if: env.KPM_ENABLE == 'true' && (env.KPM_INLINE == 'true' || env.KPM_KPATCH_NEXT == 'true')
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE/device_kernel/
