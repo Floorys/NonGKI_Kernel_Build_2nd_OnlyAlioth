@@ -29,6 +29,14 @@ runs:
           else
             echo "Now using custom AnyKernel3."
 
+            if [[ "${{ env.AK3_SOURCE }}" =~ "kvsnr113" ]]; then
+              echo "Configuring kvsnr113 AnyKernel3 for ${{ env.DEVICE_CODENAME }}..."
+              sed -i "s/^devicename=.*/devicename=${{ env.DEVICE_CODENAME }}/" AnyKernel3/anykernel.sh
+              sed -i 's/mv \*-Image \$home\/Image/\[ -f \*-Image \] \&\& mv \*-Image \$home\/Image 2>\/dev\/null || true/' AnyKernel3/anykernel.sh
+              sed -i 's/mv \*-dtb \$home\/dtb/\[ -f \*-dtb \] \&\& mv \*-dtb \$home\/dtb 2>\/dev\/null || true/' AnyKernel3/anykernel.sh
+              sed -i 's/mv \*-dtbo\.img \$home\/dtbo\.img/\[ -f \*-dtbo.img \] \&\& mv \*-dtbo.img \$home\/dtbo.img 2>\/dev\/null || true/' AnyKernel3/anykernel.sh
+            fi
+
           fi
 
           if [[ -f "$IMAGE_DIR/Image.gz-dtb" ]]; then
@@ -100,6 +108,11 @@ runs:
             fi
 
           fi
+
+          # Also provide device-prefixed copies (e.g. alioth-Image, alioth-dtb, alioth-dtbo.img) for custom AnyKernel3 scripts
+          [ -f tmp/Image ] && cp -fp tmp/Image "tmp/${{ env.DEVICE_CODENAME }}-Image" 2>/dev/null || true
+          [ -f tmp/dtb ] && cp -fp tmp/dtb "tmp/${{ env.DEVICE_CODENAME }}-dtb" 2>/dev/null || true
+          [ -f tmp/dtbo.img ] && cp -fp tmp/dtbo.img "tmp/${{ env.DEVICE_CODENAME }}-dtbo.img" 2>/dev/null || true
 
           cp -rp ./AnyKernel3/* tmp
           cd tmp
