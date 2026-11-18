@@ -17,9 +17,6 @@ runs:
             git clone --depth=1 -b v5.6.4.2 https://github.com/aircrack-ng/rtl8812au.git "$DRIVER_DIR"
             rm -rf "$DRIVER_DIR/.git"
 
-            # Pre-generate autoconf.h for USB multidrv (RTL8812A/8821A/8814A)
-            cp "$DRIVER_DIR/autoconf_multidrv_usb_linux.h" "$DRIVER_DIR/include/autoconf.h"
-
             # Adapt Makefile for in-tree ARM64 Android kernel build with Clang/LLD
             sed -i \
               -e 's/-fno-pie//g' \
