@@ -10,7 +10,7 @@
 - Available in two workflows: **EN** ([`build-release.yml`](.github/workflows/build-release.yml)) and **RU** ([`build-release-ru.yml`](.github/workflows/build-release-ru.yml)), with interactive `workflow_dispatch` toggles:
   - Kernel target: `both`, `lineageos`, or `e404`
   - KernelSU fork (`bakasu`, `next`, `xxksu`, `rsuntk`, `sukisu`) and BakaSU `Multi-Manager`
-  - `SUSFS` (inline hooks for `bakasu`; incompatible with: `next`, `xxksu`, `rsuntk`, `sukisu`), `NoMount`, `Baseband Guard (BBG)` (+ optional boot partition write block), `Re:Kernel`, `Droidspaces` (LXC/Docker), `KPM` (Kernel Patch Module), `fgetpriority`, `VPNHide Next`, and `Disable LTO/CFI`.
+  - `SUSFS` (inline hooks for `bakasu`; incompatible with: `next`, `xxksu`, `rsuntk`, `sukisu`), `NoMount`, `Baseband Guard (BBG)` (+ optional boot partition write block), `Re:Kernel`, `Droidspaces` (LXC/Docker), `KPM` (Kernel Patch Module), `fgetpriority`, `VPNHide Next`, `RTL8812AU` (built-in Realtek 88XXau USB Wi-Fi driver), and `Disable LTO/CFI`.
   - Optional publishing directly to GitHub Releases.
 
 **Русский**:
@@ -20,5 +20,5 @@
 - Доступно всего **2 сценария**: на английском ([`build-release.yml`](.github/workflows/build-release.yml)) и русском ([`build-release-ru.yml`](.github/workflows/build-release-ru.yml)) языках с интерактивными параметрами при запуске:
   - Выбор ядра: `both`, `lineageos` или `e404`
   - Выбор KernelSU (`bakasu`, `next`, `xxksu`, `rsuntk`, `sukisu`) и `Multi-Manager` (для BakaSU)
-  - `SUSFS` (для `bakasu`; не совместим с: `next`, `xxksu`, `rsuntk`, `sukisu`), `NoMount`, `Baseband Guard (BBG)` (+ опциональная блокировка записи в `boot`), `Re:Kernel`, `Droidspaces` (LXC/Docker), `KPM` (Kernel Patch Module), `fgetpriority`, `VPNHide Next` и отключение `LTO/CFI`.
+  - `SUSFS` (для `bakasu`; не совместим с: `next`, `xxksu`, `rsuntk`, `sukisu`), `NoMount`, `Baseband Guard (BBG)` (+ опциональная блокировка записи в `boot`), `Re:Kernel`, `Droidspaces` (LXC/Docker), `KPM` (Kernel Patch Module), `fgetpriority`, `VPNHide Next`, `RTL8812AU` (встроенный драйвер USB Wi-Fi Realtek 88XXau) и отключение `LTO/CFI`.
   - Опциональная публикация собранного ядра сразу в GitHub Releases.

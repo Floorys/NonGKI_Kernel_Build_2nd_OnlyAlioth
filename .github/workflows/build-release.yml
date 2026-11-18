@@ -52,6 +52,9 @@ on:
       vpnhide_enable:
         type: boolean
         default: false
+      rtl8812au_enable:
+        type: boolean
+        default: false
       disable_lto_cfi:
         type: boolean
         default: false
@@ -198,6 +201,12 @@ on:
         type: boolean
         default: false
 
+      rtl8812au_enable:
+        description: "Enable Realtek RTL8812AU USB Wi-Fi driver (TP-Link Archer T4UH v2 / Monitor Mode)"
+        required: true
+        type: boolean
+        default: false
+
       disable_lto_cfi:
         description: "Disable LTO / CFI (faster build, troubleshooting)"
         required: true
@@ -277,6 +286,7 @@ jobs:
       NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable != false) }}"
       FGETPRIORITY_ENABLE: "${{ format('{0}', inputs.fgetpriority_enable == true) }}"
       VPNHIDE_ENABLE: "${{ format('{0}', inputs.vpnhide_enable == true) }}"
+      RTL8812AU_ENABLE: "${{ format('{0}', inputs.rtl8812au_enable == true) }}"
 
       HOOK_METHOD: "syscall"
 
@@ -315,6 +325,7 @@ jobs:
           echo "KPM:           ${{ env.KPM_ENABLE }}"
           echo "fgetpriority:  ${{ env.FGETPRIORITY_ENABLE }}"
           echo "VPNHide Next:  ${{ env.VPNHIDE_ENABLE }}"
+          echo "RTL8812AU:     ${{ env.RTL8812AU_ENABLE }}"
           echo "Disable LTO:   ${{ env.DISABLE_LTO_CFI }}"
 
           if [[ "${{ env.KPM_ENABLE }}" == "true" ]]; then
@@ -382,6 +393,9 @@ jobs:
 
       - name: 🛜 Patch Kernel of VPNHide
         uses: ./.github/workflows/patch-vpnhide
+
+      - name: 📡 Patch Kernel of RTL8812AU
+        uses: ./.github/workflows/patch-rtl8812au
 
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
@@ -461,6 +475,7 @@ jobs:
       NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable != false) }}"
       FGETPRIORITY_ENABLE: "${{ format('{0}', inputs.fgetpriority_enable == true) }}"
       VPNHIDE_ENABLE: "${{ format('{0}', inputs.vpnhide_enable == true) }}"
+      RTL8812AU_ENABLE: "${{ format('{0}', inputs.rtl8812au_enable == true) }}"
 
       HOOK_METHOD: "syscall"
 
@@ -499,6 +514,7 @@ jobs:
           echo "KPM:           ${{ env.KPM_ENABLE }}"
           echo "fgetpriority:  ${{ env.FGETPRIORITY_ENABLE }}"
           echo "VPNHide Next:  ${{ env.VPNHIDE_ENABLE }}"
+          echo "RTL8812AU:     ${{ env.RTL8812AU_ENABLE }}"
           echo "Disable LTO:   ${{ env.DISABLE_LTO_CFI }}"
 
           if [[ "${{ env.KPM_ENABLE }}" == "true" ]]; then
@@ -569,6 +585,9 @@ jobs:
       - name: 🛜 Patch Kernel of VPNHide
         uses: ./.github/workflows/patch-vpnhide
 
+      - name: 📡 Patch Kernel of RTL8812AU
+        uses: ./.github/workflows/patch-rtl8812au
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
@@ -607,6 +626,7 @@ jobs:
       KPM_ENABLE: "${{ format('{0}', inputs.kpm_enable == true) }}"
       FGETPRIORITY_ENABLE: "${{ format('{0}', inputs.fgetpriority_enable == true) }}"
       VPNHIDE_ENABLE: "${{ format('{0}', inputs.vpnhide_enable == true) }}"
+      RTL8812AU_ENABLE: "${{ format('{0}', inputs.rtl8812au_enable == true) }}"
 
     steps:
       - name: Checkout code
@@ -667,19 +687,20 @@ jobs:
               echo "RELEASE_NOTES<<EOF"
               echo "Конфигурация сборки для **Xiaomi Poco F3 (\`alioth\`)**:"
               echo ""
-              echo "| Ядро / Источник | Кодовое имя | Версия | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM | fgetpriority | VPNHide |"
-              echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
+              echo "| Ядро / Источник | Кодовое имя | Версия | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM | fgetpriority | VPNHide | RTL8812AU |"
+              echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
               if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
-                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") |"
+                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
               if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
-                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") |"
+                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
               echo ""
               echo "$KSU_INFO"
               echo "- **Поддержка KPM (Kernel Patch Module)**: $([ "${KPM_ENABLE}" = "true" ] && echo "Включена в ядро (CONFIG_KALLSYMS_ALL) ✅" || echo "Выключена ❌")"
               echo "- **fgetpriority**: $([ "${FGETPRIORITY_ENABLE}" = "true" ] && echo "Включено (скрытие getpriority) ✅" || echo "Выключено ❌")"
               echo "- **VPNHide Next**: $([ "${VPNHIDE_ENABLE}" = "true" ] && echo "Включено (скрытие VPN статуса) ✅" || echo "Выключено ❌")"
+              echo "- **Драйвер Wi-Fi RTL8812AU**: $([ "${RTL8812AU_ENABLE}" = "true" ] && echo "Встроен в ядро (88XXau / Monitor Mode) ✅" || echo "Выключен ❌")"
               echo "EOF"
             } >> $GITHUB_ENV
           else
@@ -687,19 +708,20 @@ jobs:
               echo "RELEASE_NOTES<<EOF"
               echo "Build configuration for **Xiaomi Poco F3 (\`alioth\`)**:"
               echo ""
-              echo "| Kernel / Source | Codename | Kernel Ver | Branch | Method | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM | fgetpriority | VPNHide |"
-              echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
+              echo "| Kernel / Source | Codename | Kernel Ver | Branch | Method | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM | fgetpriority | VPNHide | RTL8812AU |"
+              echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
               if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
-                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") |"
+                echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
               if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
-                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") |"
+                echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
               echo ""
               echo "$KSU_INFO"
               echo "- **KPM (Kernel Patch Module) support**: $([ "${KPM_ENABLE}" = "true" ] && echo "Enabled in kernel (CONFIG_KALLSYMS_ALL) ✅" || echo "Disabled ❌")"
               echo "- **fgetpriority**: $([ "${FGETPRIORITY_ENABLE}" = "true" ] && echo "Enabled (hide getpriority syscall) ✅" || echo "Disabled ❌")"
               echo "- **VPNHide Next**: $([ "${VPNHIDE_ENABLE}" = "true" ] && echo "Enabled (hide VPN status) ✅" || echo "Disabled ❌")"
+              echo "- **Realtek RTL8812AU USB Wi-Fi**: $([ "${RTL8812AU_ENABLE}" = "true" ] && echo "Built-in (88XXau / Monitor Mode) ✅" || echo "Disabled ❌")"
               echo "EOF"
             } >> $GITHUB_ENV
           fi

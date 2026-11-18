@@ -144,6 +144,12 @@ on:
         type: boolean
         default: false
 
+      rtl8812au_enable:
+        description: "Включить драйвер Wi-Fi RTL8812AU (TP-Link Archer T4UH v2 / Monitor Mode)"
+        required: true
+        type: boolean
+        default: false
+
       disable_lto_cfi:
         description: "Отключить LTO / CFI (быстрее сборка, для отладки)"
         required: true
@@ -171,5 +177,6 @@ jobs:
       kpm_enable: ${{ inputs.kpm_enable }}
       fgetpriority_enable: ${{ inputs.fgetpriority_enable }}
       vpnhide_enable: ${{ inputs.vpnhide_enable }}
+      rtl8812au_enable: ${{ inputs.rtl8812au_enable }}
       disable_lto_cfi: ${{ inputs.disable_lto_cfi }}
       lang: "ru"

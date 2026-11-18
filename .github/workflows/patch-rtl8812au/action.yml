@@ -1,0 +1,67 @@
+name: 'Patch Realtek RTL8812AU (88XXau) USB Wi-Fi Driver for Kernel.'
+
+runs:
+  using: 'composite'
+  steps:
+      - name: Patch RTL8812AU Driver
+        if: env.RTL8812AU_ENABLE == 'true'
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE/device_kernel/
+
+          DRIVER_DIR="drivers/net/wireless/realtek/rtl8812au"
+          DEFCONFIG="./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}"
+
+          if [ ! -d "$DRIVER_DIR" ]; then
+            echo "[+] Cloning aircrack-ng/rtl8812au (v5.6.4.2)..."
+            git clone --depth=1 -b v5.6.4.2 https://github.com/aircrack-ng/rtl8812au.git "$DRIVER_DIR"
+            rm -rf "$DRIVER_DIR/.git"
+
+            # Pre-generate autoconf.h for USB multidrv (RTL8812A/8821A/8814A)
+            cp "$DRIVER_DIR/autoconf_multidrv_usb_linux.h" "$DRIVER_DIR/include/autoconf.h"
+
+            # Adapt Makefile for in-tree ARM64 Android kernel build with Clang/LLD
+            sed -i \
+              -e 's/-fno-pie//g' \
+              -e 's/^EXTRA_CFLAGS += -O3/# EXTRA_CFLAGS += -O3/' \
+              -e 's/^EXTRA_CFLAGS += -Wno-stringop-overread/# EXTRA_CFLAGS += -Wno-stringop-overread/' \
+              -e 's/-Wno-vla -g/-Wno-vla/' \
+              -e 's/^EXTRA_LDFLAGS += --strip-debug -O3/# EXTRA_LDFLAGS += --strip-debug -O3/' \
+              -e 's/^CONFIG_PLATFORM_I386_PC = y/CONFIG_PLATFORM_I386_PC = n/' \
+              -e 's/^CONFIG_PLATFORM_ARM64_RPI = n/CONFIG_PLATFORM_ARM64_RPI = y/' \
+              -e 's|^include \$(src)/hal/phydm/phydm.mk|include $(srctree)/$(src)/hal/phydm/phydm.mk|' \
+              "$DRIVER_DIR/Makefile"
+
+            # Suppress Clang 20/22 strict warnings in legacy Realtek C code
+            sed -i '1i EXTRA_CFLAGS += -Wno-error -Wno-parentheses-equality -Wno-incompatible-pointer-types -Wno-pointer-bool-conversion -Wno-misleading-indentation -Wno-sometimes-uninitialized -Wno-tautological-compare -Wno-empty-body -Wno-self-assign -Wno-enum-conversion -Wno-strict-prototypes' "$DRIVER_DIR/Makefile"
+
+            # Wire into drivers/net/wireless/realtek/Kconfig and Makefile
+            if ! grep -q "rtl8812au/Kconfig" drivers/net/wireless/realtek/Kconfig; then
+              sed -i '/endif # WLAN_VENDOR_REALTEK/i source "drivers/net/wireless/realtek/rtl8812au/Kconfig"' drivers/net/wireless/realtek/Kconfig
+            fi
+
+            if ! grep -q "rtl8812au/" drivers/net/wireless/realtek/Makefile; then
+              echo 'obj-$(CONFIG_88XXAU)		+= rtl8812au/' >> drivers/net/wireless/realtek/Makefile
+            fi
+
+            # Verify TP-Link Archer T4UH v2 (2357:010E) USB ID is present
+            if grep -q "0x010E" "$DRIVER_DIR/os_dep/linux/usb_intf.c"; then
+              echo "[+] Verified USB ID 2357:010E (TP-Link Archer T4UH v2) in usb_intf.c."
+            fi
+          else
+            echo "[-] $DRIVER_DIR already exists, skipping clone."
+          fi
+
+          # Enable built-in RTL8812AU and required wireless stack options in defconfig
+          ./scripts/config --file "$DEFCONFIG" \
+            -e WIRELESS \
+            -e CFG80211 \
+            -e CFG80211_WEXT \
+            -e MAC80211 \
+            -e WLAN \
+            -e WLAN_VENDOR_REALTEK \
+            -e USB_SUPPORT \
+            -e USB \
+            -e 88XXAU
+
+          echo "[+] Patched Realtek RTL8812AU (88XXau) driver into kernel successfully."

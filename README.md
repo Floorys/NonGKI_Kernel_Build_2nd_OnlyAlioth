@@ -84,4 +84,5 @@ It also aims to provide an easier compilation process using **GitHub Actions**, 
 - [NoMount](https://github.com/maxsteeel/nomount) - @maxsteeel
 - [fgetpriority](https://github.com/aerath-stuff/fgetpriority) - @aerath-stuff
 - [VPNHide Next](https://github.com/soranerai/vpnhide_next) - @soranerai
+- [RTL8812AU](https://github.com/aircrack-ng/rtl8812au) - @aircrack-ng
 - And to more open-source kernel authors.

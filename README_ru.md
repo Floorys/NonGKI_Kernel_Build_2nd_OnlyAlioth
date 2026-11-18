@@ -77,6 +77,7 @@
 - **KPM (`kpm_enable`)**: включение поддержки Kernel Patch Module (`CONFIG_KALLSYMS_ALL`). Статус включения/выключения отображается в логах сборки, в имени архива (`-kpm`) и в описании GitHub Release.
 - **fgetpriority (`fgetpriority_enable`)**: скрытие системного вызова `getpriority` для защиты от обнаружения процессов приложениями.
 - **VPNHide Next (`vpnhide_enable`)**: сокрытие статуса VPN-подключения от приложений.
+- **RTL8812AU (`rtl8812au_enable`)**: встроенный в ядро драйвер USB Wi-Fi Realtek 88XXau (поддерживает TP-Link Archer T4UH v2 `2357:010E`, Monitor Mode и Packet Injection).
 - **Disable LTO / CFI (`disable_lto_cfi`)**: отключение LTO и CFI для более быстрой сборки или отладки.
 
 ---
@@ -113,6 +114,7 @@
 - [NoMount](https://github.com/maxsteeel/nomount) - @maxsteeel
 - [fgetpriority](https://github.com/aerath-stuff/fgetpriority) - @aerath-stuff
 - [VPNHide Next](https://github.com/soranerai/vpnhide_next) - @soranerai
+- [RTL8812AU](https://github.com/aircrack-ng/rtl8812au) - @aircrack-ng
 - [AnyKernel3](https://github.com/osm0sis/AnyKernel3) - @osm0sis
 - Авторы ядер: [LineageOS](https://github.com/LineageOS/android_kernel_xiaomi_sm8250), [@kvsnr113](https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404)
 
