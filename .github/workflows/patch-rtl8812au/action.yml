@@ -30,8 +30,8 @@ runs:
               -e 's|^include \$(src)/hal/phydm/phydm.mk|include $(srctree)/$(src)/hal/phydm/phydm.mk|' \
               "$DRIVER_DIR/Makefile"
 
-            # Suppress Clang strict warnings & unknown warning options in legacy Realtek C code
-            sed -i '1i EXTRA_CFLAGS += -Wno-error -Wno-unknown-warning-option -Wno-parentheses-equality -Wno-incompatible-pointer-types -Wno-pointer-bool-conversion -Wno-misleading-indentation -Wno-sometimes-uninitialized -Wno-tautological-compare -Wno-empty-body -Wno-self-assign -Wno-enum-conversion -Wno-strict-prototypes -Wno-unused-function -Wno-unused-variable -Wno-unused-label' "$DRIVER_DIR/Makefile"
+            # Suppress Clang strict warnings, disable CFI for legacy Realtek C code, and adapt for Android ARM64
+            sed -i '1i EXTRA_CFLAGS += -Wno-error -Wno-unknown-warning-option -Wno-parentheses-equality -Wno-incompatible-pointer-types -Wno-pointer-bool-conversion -Wno-misleading-indentation -Wno-sometimes-uninitialized -Wno-tautological-compare -Wno-empty-body -Wno-self-assign -Wno-enum-conversion -Wno-strict-prototypes -Wno-unused-function -Wno-unused-variable -Wno-unused-label -fno-sanitize=cfi -fno-sanitize=all -DCONFIG_CFG80211_CONNECT_BSS_ANDROID' "$DRIVER_DIR/Makefile"
 
             # Wire into drivers/net/wireless/realtek/Kconfig and Makefile
             if ! grep -q "rtl8812au/Kconfig" drivers/net/wireless/realtek/Kconfig; then
@@ -50,16 +50,16 @@ runs:
             echo "[-] $DRIVER_DIR already exists, skipping clone."
           fi
 
-          # Enable built-in RTL8812AU and required wireless stack options in defconfig
+          # Enable RTL8812AU as loadable module (=m) to prevent early boot kernel panics and battery drain
           ./scripts/config --file "$DEFCONFIG" \
+            -e MODULES \
             -e WIRELESS \
             -e CFG80211 \
             -e CFG80211_WEXT \
-            -e MAC80211 \
             -e WLAN \
             -e WLAN_VENDOR_REALTEK \
             -e USB_SUPPORT \
             -e USB \
-            -e 88XXAU
+            -m 88XXAU
 
           echo "[+] Patched Realtek RTL8812AU (88XXau) driver into kernel successfully."
