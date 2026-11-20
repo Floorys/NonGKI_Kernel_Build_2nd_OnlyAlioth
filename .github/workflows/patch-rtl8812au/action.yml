@@ -20,8 +20,9 @@ runs:
             # Adapt Makefile for in-tree ARM64 Android kernel build with Clang/LLD
             sed -i \
               -e 's/-fno-pie//g' \
+              -e 's/-Wno-cast-function-type//g' \
+              -e 's/-Wno-stringop-overread//g' \
               -e 's/^EXTRA_CFLAGS += -O3/# EXTRA_CFLAGS += -O3/' \
-              -e 's/^EXTRA_CFLAGS += -Wno-stringop-overread/# EXTRA_CFLAGS += -Wno-stringop-overread/' \
               -e 's/-Wno-vla -g/-Wno-vla/' \
               -e 's/^EXTRA_LDFLAGS += --strip-debug -O3/# EXTRA_LDFLAGS += --strip-debug -O3/' \
               -e 's/^CONFIG_PLATFORM_I386_PC = y/CONFIG_PLATFORM_I386_PC = n/' \
@@ -29,8 +30,8 @@ runs:
               -e 's|^include \$(src)/hal/phydm/phydm.mk|include $(srctree)/$(src)/hal/phydm/phydm.mk|' \
               "$DRIVER_DIR/Makefile"
 
-            # Suppress Clang 20/22 strict warnings in legacy Realtek C code
-            sed -i '1i EXTRA_CFLAGS += -Wno-error -Wno-parentheses-equality -Wno-incompatible-pointer-types -Wno-pointer-bool-conversion -Wno-misleading-indentation -Wno-sometimes-uninitialized -Wno-tautological-compare -Wno-empty-body -Wno-self-assign -Wno-enum-conversion -Wno-strict-prototypes' "$DRIVER_DIR/Makefile"
+            # Suppress Clang strict warnings & unknown warning options in legacy Realtek C code
+            sed -i '1i EXTRA_CFLAGS += -Wno-error -Wno-unknown-warning-option -Wno-parentheses-equality -Wno-incompatible-pointer-types -Wno-pointer-bool-conversion -Wno-misleading-indentation -Wno-sometimes-uninitialized -Wno-tautological-compare -Wno-empty-body -Wno-self-assign -Wno-enum-conversion -Wno-strict-prototypes -Wno-unused-function -Wno-unused-variable -Wno-unused-label' "$DRIVER_DIR/Makefile"
 
             # Wire into drivers/net/wireless/realtek/Kconfig and Makefile
             if ! grep -q "rtl8812au/Kconfig" drivers/net/wireless/realtek/Kconfig; then
