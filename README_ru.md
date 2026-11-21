@@ -42,9 +42,15 @@
    - Компилятор: AOSP Clang (`lineage-20.0`), `LD=ld.lld LLVM=1 LLVM_IAS=1`
    - Фикс-патч SUSFS: [`Patches/Patch/poco_f3_susfs_fixed.patch`](Patches/Patch/poco_f3_susfs_fixed.patch)
 2. **E404 (`sm8250`)** — [`kvsnr113/xiaomi_sm8250_kernel_e404`](https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404)
-   - Ветки: `main`, `main-bpf`, `a17`, `staging`, `personal`, `personal-test`
+   - Ветки: `main`, `main-bpf`, `a17`, `staging`, `personal`, `personal-test` (+ остальные ветки)
    - Компилятор: LLVM/Clang `22.1.3`, `LD=ld.lld LLVM=1 LLVM_IAS=1`
    - Фикс-патч SUSFS: [`Patches/Patch/poco_f3_e404_susfs_fixed.patch`](Patches/Patch/poco_f3_e404_susfs_fixed.patch)
+3. **Rezadinosaurus (`sm8250`)** — [`rezadinosaurus/android_kernel_qcom_sm8250`](https://github.com/rezadinosaurus/android_kernel_qcom_sm8250)
+   - Ветки: `lineage-latte` (для AOSP/CLO прошивок) и `lineage-mocca` (для MIUI/HyperOS прошивок)
+   - Компилятор: AOSP Clang (`lineage-20.0`), `LD=ld.lld LLVM=1 LLVM_IAS=1`
+   - Дефконфиг: `vendor/alioth_defconfig`
+   - Фикс-патч SUSFS: [`Patches/Patch/poco_f3_susfs_fixed.patch`](Patches/Patch/poco_f3_susfs_fixed.patch)
+   - Упаковка: AnyKernel3
 
 ---
 
@@ -54,8 +60,8 @@
 
 | Сценарий | Язык | Файл | Описание |
 |---|---|---|---|
-| Build and Release Kernel (EN) | English | [build-release.yml](.github/workflows/build-release.yml) | Сборка LineageOS, E404 или обоих ядер + релиз |
-| Сборка и релиз ядра (RU) | Русский | [build-release-ru.yml](.github/workflows/build-release-ru.yml) | Сборка LineageOS, E404 или обоих ядер + релиз |
+| Build and Release Kernel (EN) | English | [build-release.yml](.github/workflows/build-release.yml) | Сборка LineageOS, E404, Rezadinosaurus или всех ядер + релиз |
+| Сборка и релиз ядра (RU) | Русский | [build-release-ru.yml](.github/workflows/build-release-ru.yml) | Сборка LineageOS, E404, Rezadinosaurus или всех ядер + релиз |
 
 - Еженедельная автосборка (`schedule`) настроена в [build-release.yml](.github/workflows/build-release.yml), чтобы не запускать дублирующие сборки.
 
@@ -65,7 +71,7 @@
 
 При нажатии **Run workflow** можно настроить сборку галочками и выпадающими списками:
 
-- **Цель / ветка**: выбор `lineageos` / `e404` / `both` (в релизном workflow) и нужной ветки ядра.
+- **Цель / ветка**: выбор ядра (`all` — все три, `lineageos`, `e404`, `rezadinosaurus` или `both` — LineageOS+E404) и нужной ветки.
 - **Менеджер KernelSU (`kernelsu_fork`)**: `bakasu` (по умолчанию), `next`, `xxksu`, `rsuntk`, `sukisu`.
 - **Multi-Manager (`multi_manager`)**: поддержка нескольких менеджеров для **BakaSU** (`BakaSU + Official KSU + KowSU`).
 - **SUSFS (`susfs_enable`)**: встроенные патчи скрытия рута/модулей (`v2.4.0`).  
@@ -116,5 +122,5 @@
 - [VPNHide Next](https://github.com/soranerai/vpnhide_next) - @soranerai
 - [RTL8812AU](https://github.com/aircrack-ng/rtl8812au) - @aircrack-ng
 - [AnyKernel3](https://github.com/osm0sis/AnyKernel3) - @osm0sis
-- Авторы ядер: [LineageOS](https://github.com/LineageOS/android_kernel_xiaomi_sm8250), [@kvsnr113](https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404)
+- Авторы ядер: [LineageOS](https://github.com/LineageOS/android_kernel_xiaomi_sm8250), [@kvsnr113](https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404), [@rezadinosaurus](https://github.com/rezadinosaurus/android_kernel_qcom_sm8250)
 

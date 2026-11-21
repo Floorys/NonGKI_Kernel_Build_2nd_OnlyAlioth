@@ -12,13 +12,16 @@ on:
         default: true
       kernel_target:
         type: string
-        default: "both"
+        default: "all"
       kernel_branch:
         type: string
         default: "lineage-24.0"
       e404_branch:
         type: string
         default: "main"
+      rezadinosaurus_branch:
+        type: string
+        default: "lineage-latte"
       kernelsu_fork:
         type: string
         default: "bakasu"
@@ -74,11 +77,13 @@ on:
         description: "Kernel to Build"
         required: true
         type: choice
-        default: "both"
+        default: "all"
         options:
-          - "both"
+          - "all"
           - "lineageos"
           - "e404"
+          - "rezadinosaurus"
+          - "both"
 
       kernel_branch:
         description: "LineageOS Kernel Branch (sm8250)"
@@ -128,6 +133,15 @@ on:
           - "sched"
           - "simple_thermal"
           - "zstd"
+
+      rezadinosaurus_branch:
+        description: "Rezadinosaurus Kernel Branch (sm8250: latte = AOSP/CLO, mocca = MIUI/HOS)"
+        required: true
+        type: choice
+        default: "lineage-latte"
+        options:
+          - "lineage-latte"
+          - "lineage-mocca"
 
       kernelsu_fork:
         description: "KernelSU Fork / Manager (SUSFS is only compatible with bakasu; incompatible with: next, xxksu, rsuntk, sukisu)"
@@ -219,7 +233,7 @@ on:
 jobs:
   build-poco-f3-lineageos:
     name: Xiaomi Poco F3 (LineageOS)
-    if: inputs.kernel_target == 'lineageos' || inputs.kernel_target == 'both' || github.event_name == 'schedule'
+    if: inputs.kernel_target == 'lineageos' || inputs.kernel_target == 'both' || inputs.kernel_target == 'all' || github.event_name == 'schedule'
     runs-on: ubuntu-24.04
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
@@ -408,7 +422,7 @@ jobs:
 
   build-poco-f3-e404:
     name: Xiaomi Poco F3 (E404)
-    if: inputs.kernel_target == 'e404' || inputs.kernel_target == 'both' || github.event_name == 'schedule'
+    if: inputs.kernel_target == 'e404' || inputs.kernel_target == 'both' || inputs.kernel_target == 'all' || github.event_name == 'schedule'
     runs-on: ubuntu-24.04
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
@@ -598,25 +612,216 @@ jobs:
       - name: ✏️ Upload Artifacts
         uses: ./.github/workflows/upload-files
 
+  build-poco-f3-rezadinosaurus:
+    name: Xiaomi Poco F3 (Rezadinosaurus)
+    if: inputs.kernel_target == 'rezadinosaurus' || inputs.kernel_target == 'all' || github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+
+      DEVICE_NAME: "poco_f3"
+      DEVICE_CODENAME: "alioth"
+
+      CUSTOM_CMDS: "CLANG_TRIPLE=aarch64-linux-gnu-"
+      EXTRA_CMDS: "LD=ld.lld LLVM=1 LLVM_IAS=1"
+
+      KERNEL_SOURCE: "https://github.com/rezadinosaurus/android_kernel_qcom_sm8250.git"
+      KERNEL_BRANCH: "${{ inputs.rezadinosaurus_branch || 'lineage-latte' }}"
+
+      CLANG_SOURCE: "https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b.git"
+      CLANG_BRANCH: "lineage-20.0"
+
+      GCC_GNU: false
+      GCC_64_SOURCE: "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9.git"
+      GCC_64_BRANCH: "android12L-release"
+      GCC_32_SOURCE: "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9.git"
+      GCC_32_BRANCH: "android12L-release"
+
+      DEFCONFIG_SOURCE: ""
+      DEFCONFIG_NAME: "vendor/alioth_defconfig"
+      DEFCONFIG_ORIGIN_IMAGE: ""
+      DEFCONFIG_FROM_BOOT: false
+
+      KERNELSU_SOURCE: ""
+      KERNELSU_BRANCH: ""
+
+      KERNELSU_AUTO_GET: "true"
+      KERNELSU_AUTO_FORK: "${{ inputs.kernelsu_fork || 'bakasu' }}"
+      MULTI_MANAGER: "${{ format('{0}', inputs.multi_manager != false) }}"
+
+      SUSFS_ENABLE: "${{ format('{0}', inputs.susfs_enable != false) }}"
+      SUSFS_FIXED: false
+
+      AK3_SOURCE: "https://github.com/osm0sis/AnyKernel3.git"
+      AK3_BRANCH: "master"
+
+      BOOT_SOURCE: ""
+
+      NEED_DTBO: false
+      NEED_SAFE_DTBO: false
+
+      ROM_TEXT: "rezdino-${{ inputs.rezadinosaurus_branch || 'lineage-latte' }}-${{ inputs.kernelsu_fork || 'bakasu' }}"
+
+      PYTHON_VERSION: "3"
+
+      PACK_METHOD: "AnyKernel3"
+      PACK_KMODULES: "false"
+
+      KERNELSU_METHOD: "shell"
+
+      PATCHES_SOURCE: "author/source"
+      PATCHES_BRANCH: "branch"
+      SUSFS_FOLDER_FIXED: ""
+      SUSFS_PATCH_FIXED: ""
+
+      REKERNEL_ENABLE: "${{ format('{0}', inputs.rekernel_enable == true) }}"
+      DROIDSPACES_ENABLE: "${{ format('{0}', inputs.droidspaces_enable == true) }}"
+      NOMOUNT_ENABLE: "${{ format('{0}', inputs.nomount_enable != false) }}"
+      FGETPRIORITY_ENABLE: "${{ format('{0}', inputs.fgetpriority_enable == true) }}"
+      VPNHIDE_ENABLE: "${{ format('{0}', inputs.vpnhide_enable == true) }}"
+      RTL8812AU_ENABLE: "${{ format('{0}', inputs.rtl8812au_enable == true) }}"
+
+      HOOK_METHOD: "syscall"
+
+      KPM_ENABLE: "${{ format('{0}', inputs.kpm_enable == true) }}"
+      KPM_INLINE: "false"
+      KPM_KPATCH_NEXT: "false"
+      KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux"
+
+      BASEBAND_GUARD_ENABLE: "${{ format('{0}', inputs.bbg_enable == true) }}"
+      BASEBAND_GUARD_BOOT: "${{ format('{0}', inputs.bbg_boot == true) }}"
+
+      GENERATE_DTB: "false"
+      GENERATE_CHIP: "qcom"
+
+      BUILD_DEBUGGER: "false"
+      SKIP_PATCH: "false"
+
+      BUILD_OTHER_CONFIG: "false"
+      MERGE_CONFIG_FILES: ""
+
+      FREE_MORE_SPACE: "false"
+      DISABLE_LTO_CFI: "${{ format('{0}', inputs.disable_lto_cfi == true) }}"
+
+    steps:
+      - name: 🔎 Validate Selected Options
+        run: |
+          echo "Target:        Rezadinosaurus sm8250"
+          echo "Branch:        ${{ env.KERNEL_BRANCH }}"
+          echo "KernelSU Fork: ${{ env.KERNELSU_AUTO_FORK }}"
+          echo "Multi-Manager: ${{ env.MULTI_MANAGER }}"
+          echo "SUSFS:         ${{ env.SUSFS_ENABLE }}"
+          echo "NoMount:       ${{ env.NOMOUNT_ENABLE }}"
+          echo "BBG:           ${{ env.BASEBAND_GUARD_ENABLE }} (boot lock: ${{ env.BASEBAND_GUARD_BOOT }})"
+          echo "Re:Kernel:     ${{ env.REKERNEL_ENABLE }}"
+          echo "Droidspaces:   ${{ env.DROIDSPACES_ENABLE }}"
+          echo "KPM:           ${{ env.KPM_ENABLE }}"
+          echo "fgetpriority:  ${{ env.FGETPRIORITY_ENABLE }}"
+          echo "VPNHide Next:  ${{ env.VPNHIDE_ENABLE }}"
+          echo "RTL8812AU:     ${{ env.RTL8812AU_ENABLE }}"
+          echo "Disable LTO:   ${{ env.DISABLE_LTO_CFI }}"
+
+          if [[ "${{ env.KPM_ENABLE }}" == "true" ]]; then
+            echo "::notice::Поддержка KPM (Kernel Patch Module) ВКЛЮЧЕНА в ядро (KPM enabled)"
+            echo "ROM_TEXT=${{ env.ROM_TEXT }}-kpm" >> $GITHUB_ENV
+          else
+            echo "::notice::Поддержка KPM (Kernel Patch Module) ВЫКЛЮЧЕНА (KPM disabled)"
+          fi
+
+          if [[ "${{ env.SUSFS_ENABLE }}" == "true" && "${{ env.KERNELSU_AUTO_FORK }}" != "bakasu" ]]; then
+            echo "::error::SUSFS v2.4.0 совместим только с 'bakasu'! Менеджеры 'next', 'xxksu', 'rsuntk', 'sukisu' НЕ поддерживают SUSFS в этом репозитории. Выберите 'bakasu' или снимите галочку SUSFS (SUSFS is incompatible with '${{ env.KERNELSU_AUTO_FORK }}', works only with 'bakasu')."
+            exit 1
+          fi
+
+      - name: ⏰ Checkout repository
+        uses: actions/checkout@v6
+
+      - name: ⌛️ Compilation environment preparation
+        uses: ./.github/workflows/build-env
+
+      - name: ⚙️ Get necessary tools
+        uses: ./.github/workflows/build-ready
+
+      - name: 🪝 Patch Kernel of SUSFS
+        uses: ./.github/workflows/patch-susfs
+
+      - name: 🔗 Patch for no-kprobe
+        uses: ./.github/workflows/patch-no-kprobe
+
+      - name: 🪛 Extra Kernel Options
+        run: |
+          cd $GITHUB_WORKSPACE/device_kernel
+
+          if [[ "${{ env.SUSFS_ENABLE }}" == "true" ]]; then
+            patch -p1 < /tmp/Patches/Patch/poco_f3_susfs_fixed.patch
+            find . -type f \( -name "*.rej" -o -name "*.orig" \) -delete
+            sed -i 's/if (!dpath) {/if (IS_ERR(dpath)) {/' fs/notify/fdinfo.c fs/proc/fd.c
+          fi
+
+          ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" -d CC_WERROR
+
+          if [[ "${{ env.KERNELSU_AUTO_FORK }}" == "bakasu" && "${{ env.MULTI_MANAGER }}" != "true" ]]; then
+            ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" -d KSU_MULTI_MANAGER_SUPPORT
+          fi
+
+          if [[ "${{ env.DISABLE_LTO_CFI }}" == "true" ]]; then
+            ./scripts/config --file "arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}" \
+              -d LTO -d LTO_CLANG -d CFI -d CFI_PERMISSIVE -d CFI_CLANG
+          fi
+
+      - name: 🧰 Patch Kernel of Re:Kernel
+        uses: ./.github/workflows/patch-rekernel
+
+      - name: 💿 Patch Kernel of Droidspaces
+        uses: ./.github/workflows/patch-droidspaces
+
+      - name: 🔒 Patch Kernel of Baseband Guard
+        uses: ./.github/workflows/patch-baseband-guard
+
+      - name: 🛡️ Patch Kernel of NoMount
+        uses: ./.github/workflows/patch-nomount
+
+      - name: ⛔ Patch Kernel of fgetpriority
+        uses: ./.github/workflows/patch-fgetpriority
+
+      - name: 🛜 Patch Kernel of VPNHide
+        uses: ./.github/workflows/patch-vpnhide
+
+      - name: 📡 Patch Kernel of RTL8812AU
+        uses: ./.github/workflows/patch-rtl8812au
+
+      - name: 🚀 Build Process
+        uses: ./.github/workflows/build-process
+
+      - name: 🔩 Pack Process
+        uses: ./.github/workflows/pack-process
+
+      - name: ✏️ Upload Artifacts
+        uses: ./.github/workflows/upload-files
+
   release-kernel:
     name: "Step Release Kernel"
     runs-on: ubuntu-24.04
     needs:
       - build-poco-f3-lineageos
       - build-poco-f3-e404
+      - build-poco-f3-rezadinosaurus
     if: |
       always() &&
       !cancelled() &&
       !contains(needs.*.result, 'failure') &&
       (inputs.release-kernel != false) &&
-      (needs.build-poco-f3-lineageos.result == 'success' || needs.build-poco-f3-e404.result == 'success')
+      (needs.build-poco-f3-lineageos.result == 'success' || needs.build-poco-f3-e404.result == 'success' || needs.build-poco-f3-rezadinosaurus.result == 'success')
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NAME: "Pre-built"
       LANG_OPT: "${{ inputs.lang || 'en' }}"
-      KERNEL_TARGET: "${{ inputs.kernel_target || 'both' }}"
+      KERNEL_TARGET: "${{ inputs.kernel_target || 'all' }}"
       K_BRANCH: "${{ inputs.kernel_branch || 'lineage-24.0' }}"
       E404_BRANCH: "${{ inputs.e404_branch || 'main' }}"
+      REZDINO_BRANCH: "${{ inputs.rezadinosaurus_branch || 'lineage-latte' }}"
       KSU_FORK: "${{ inputs.kernelsu_fork || 'bakasu' }}"
       MULTI_MANAGER: "${{ format('{0}', inputs.multi_manager != false) }}"
       SUSFS_ENABLE: "${{ format('{0}', inputs.susfs_enable != false) }}"
@@ -690,11 +895,14 @@ jobs:
               echo ""
               echo "| Ядро / Источник | Кодовое имя | Версия | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM | fgetpriority | VPNHide | RTL8812AU |"
               echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
-              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
+              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" || "${KERNEL_TARGET}" == "all" ]]; then
                 echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
-              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
+              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" || "${KERNEL_TARGET}" == "all" ]]; then
                 echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
+              fi
+              if [[ "${KERNEL_TARGET}" == "rezadinosaurus" || "${KERNEL_TARGET}" == "all" ]]; then
+                echo "| Xiaomi Poco F3 (Rezadinosaurus) | alioth | 4.19 | ${REZDINO_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
               echo ""
               echo "$KSU_INFO"
@@ -711,11 +919,14 @@ jobs:
               echo ""
               echo "| Kernel / Source | Codename | Kernel Ver | Branch | Method | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM | fgetpriority | VPNHide | RTL8812AU |"
               echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
-              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" ]]; then
+              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" || "${KERNEL_TARGET}" == "all" ]]; then
                 echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
-              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" ]]; then
+              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" || "${KERNEL_TARGET}" == "all" ]]; then
                 echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
+              fi
+              if [[ "${KERNEL_TARGET}" == "rezadinosaurus" || "${KERNEL_TARGET}" == "all" ]]; then
+                echo "| Xiaomi Poco F3 (Rezadinosaurus) | alioth | 4.19 | ${REZDINO_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
               echo ""
               echo "$KSU_INFO"

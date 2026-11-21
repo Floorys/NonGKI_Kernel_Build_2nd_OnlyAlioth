@@ -85,4 +85,4 @@ It also aims to provide an easier compilation process using **GitHub Actions**, 
 - [fgetpriority](https://github.com/aerath-stuff/fgetpriority) - @aerath-stuff
 - [VPNHide Next](https://github.com/soranerai/vpnhide_next) - @soranerai
 - [RTL8812AU](https://github.com/aircrack-ng/rtl8812au) - @aircrack-ng
-- And to more open-source kernel authors.
+- Kernel authors: [LineageOS](https://github.com/LineageOS/android_kernel_xiaomi_sm8250), [@kvsnr113](https://github.com/kvsnr113/xiaomi_sm8250_kernel_e404), [@rezadinosaurus](https://github.com/rezadinosaurus/android_kernel_qcom_sm8250)
