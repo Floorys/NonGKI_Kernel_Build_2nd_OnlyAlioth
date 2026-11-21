@@ -65,7 +65,7 @@ runs:
 
             echo "[+] Removed write_op, sel_handle_status_ops, security_dump_masked_av and context_struct_compute_av static state."
 
-            if [ "$FIRST_VERSION" -lt 5 ] && [ "$SECOND_VERSION" -lt 15 ]; then
+            if [ "$FIRST_VERSION" -lt 5 ] || { [ "$FIRST_VERSION" -eq 5 ] && [ "$SECOND_VERSION" -lt 15 ]; }; then
                 if grep -q "sel_mutex" "security/selinux/selinuxfs.c" >/dev/null 2>&1; then
                     sed -i 's/^static DEFINE_MUTEX(sel_mutex)/DEFINE_MUTEX(sel_mutex)/' security/selinux/selinuxfs.c
                     echo "[+] Removed sel_mutex static state."

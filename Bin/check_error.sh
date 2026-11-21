@@ -31,7 +31,7 @@ analyze_errors() {
 
             current_error_lines=()
             current_error_lines+=("$line")
-        elif [[ "$line" =~ "note:" || "$line" =~ "make["[0-9]"]:" && "$line" =~ "***" && "$processing_error" == true ]]; then
+        elif [[ "$processing_error" == true ]] && [[ "$line" =~ "note:" || ( "$line" =~ "make["[0-9]"]:" && "$line" =~ "***" ) ]]; then
 
             current_error_lines+=("$line")
         elif [[ "$processing_error" == true && -n "$line" ]]; then

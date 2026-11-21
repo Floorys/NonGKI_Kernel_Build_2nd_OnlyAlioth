@@ -8,7 +8,7 @@ runs:
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE/device_kernel/
-          curl -sSLf https://raw.githubusercontent.com/maxsteeel/nomount/refs/heads/master/kernel/setup.sh | bash -s
+          curl -sSLf https://raw.githubusercontent.com/maxsteeel/nomount/dcd77d03e9912f397a586d7da81694d1628f170e/kernel/setup.sh | bash -s
 
           echo "CONFIG_NOMOUNT=y" >> ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
 
