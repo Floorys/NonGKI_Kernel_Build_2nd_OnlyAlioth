@@ -932,7 +932,7 @@ jobs:
               echo "- **KPM (Kernel Patch Module) support**: $([ "${KPM_ENABLE}" = "true" ] && echo "Enabled in kernel (CONFIG_KALLSYMS_ALL) ✅" || echo "Disabled ❌")"
               echo "- **fgetpriority**: $([ "${FGETPRIORITY_ENABLE}" = "true" ] && echo "Enabled (hide getpriority syscall) ✅" || echo "Disabled ❌")"
               echo "- **VPNHide Next**: $([ "${VPNHIDE_ENABLE}" = "true" ] && echo "Enabled (hide VPN status) ✅" || echo "Disabled ❌")"
-              echo "- **Realtek RTL8812AU USB Wi-Fi**: $([ "${RTL8812AU_ENABLE}" = "true" ] && echo "Loadable module (88XXau / Monitor Mode) ✅" || echo "Disabled ❌")"
+              echo "- **Realtek RTL8812AU USB Wi-Fi**: $([ "${RTL8812AU_ENABLE}" = "true" ] && echo "Built-in (88XXau / Monitor Mode) ✅" || echo "Disabled ❌")"
               echo "EOF"
             } >> $GITHUB_ENV
           fi

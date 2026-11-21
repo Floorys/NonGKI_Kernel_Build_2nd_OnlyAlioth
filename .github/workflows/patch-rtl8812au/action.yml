@@ -50,16 +50,17 @@ runs:
             echo "[-] $DRIVER_DIR already exists, skipping clone."
           fi
 
-          # Enable RTL8812AU as loadable module (=m) to prevent early boot kernel panics and battery drain
+          # Enable RTL8812AU as built-in driver (=y) directly into kernel image (Image).
+          # Explicitly disable CFG80211_WEXT so Qualcomm built-in Wi-Fi (QCA6390) ABI is preserved.
           ./scripts/config --file "$DEFCONFIG" \
-            -e MODULES \
             -e WIRELESS \
             -e CFG80211 \
-            -e CFG80211_WEXT \
+            -d CFG80211_WEXT \
+            -d WIRELESS_EXT \
             -e WLAN \
             -e WLAN_VENDOR_REALTEK \
             -e USB_SUPPORT \
             -e USB \
-            -m 88XXAU
+            -e 88XXAU
 
           echo "[+] Patched Realtek RTL8812AU (88XXau) driver into kernel successfully."

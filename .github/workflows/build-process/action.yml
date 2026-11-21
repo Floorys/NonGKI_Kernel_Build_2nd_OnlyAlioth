@@ -127,7 +127,7 @@ runs:
 
             make -j$(nproc --all) CC="ccache clang" ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} O=out ARCH="${{ env.KERNEL_ARCH }}" 2>&1|tee error.log
 
-            if [[ "${{ env.PACK_KMODULES }}" == "true" || "${{ env.RTL8812AU_ENABLE }}" == "true" ]]; then
+            if [[ "${{ env.PACK_KMODULES }}" == "true" ]]; then
                 echo "::group::[+] Building kernel modules (.ko)..."
                 make -j$(nproc --all) CC="ccache clang" ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} O=out ARCH="${{ env.KERNEL_ARCH }}" modules || true
                 echo "::endgroup::"
@@ -144,7 +144,7 @@ runs:
 
             make -j$(nproc --all) O=out ARCH="${{ env.KERNEL_ARCH }}" 2>&1|tee error.log
 
-            if [[ "${{ env.PACK_KMODULES }}" == "true" || "${{ env.RTL8812AU_ENABLE }}" == "true" ]]; then
+            if [[ "${{ env.PACK_KMODULES }}" == "true" ]]; then
                 echo "::group::[+] Building kernel modules (.ko)..."
                 make -j$(nproc --all) O=out ARCH="${{ env.KERNEL_ARCH }}" modules || true
                 echo "::endgroup::"
