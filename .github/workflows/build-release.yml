@@ -83,7 +83,6 @@ on:
           - "lineageos"
           - "e404"
           - "rezadinosaurus"
-          - "both"
 
       kernel_branch:
         description: "LineageOS Kernel Branch (sm8250)"
@@ -233,7 +232,7 @@ on:
 jobs:
   build-poco-f3-lineageos:
     name: Xiaomi Poco F3 (LineageOS)
-    if: inputs.kernel_target == 'lineageos' || inputs.kernel_target == 'both' || inputs.kernel_target == 'all' || github.event_name == 'schedule'
+    if: inputs.kernel_target == 'lineageos' || inputs.kernel_target == 'all' || github.event_name == 'schedule'
     runs-on: ubuntu-24.04
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
@@ -422,7 +421,7 @@ jobs:
 
   build-poco-f3-e404:
     name: Xiaomi Poco F3 (E404)
-    if: inputs.kernel_target == 'e404' || inputs.kernel_target == 'both' || inputs.kernel_target == 'all' || github.event_name == 'schedule'
+    if: inputs.kernel_target == 'e404' || inputs.kernel_target == 'all' || github.event_name == 'schedule'
     runs-on: ubuntu-24.04
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
@@ -895,10 +894,10 @@ jobs:
               echo ""
               echo "| Ядро / Источник | Кодовое имя | Версия | Ветка | Метод | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM | fgetpriority | VPNHide | RTL8812AU |"
               echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
-              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" || "${KERNEL_TARGET}" == "all" ]]; then
+              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "all" ]]; then
                 echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
-              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" || "${KERNEL_TARGET}" == "all" ]]; then
+              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "all" ]]; then
                 echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
               if [[ "${KERNEL_TARGET}" == "rezadinosaurus" || "${KERNEL_TARGET}" == "all" ]]; then
@@ -919,10 +918,10 @@ jobs:
               echo ""
               echo "| Kernel / Source | Codename | Kernel Ver | Branch | Method | KernelSU | SUSFS | NoMount | Re:Kernel | BBG | Droidspaces | KPM | fgetpriority | VPNHide | RTL8812AU |"
               echo "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
-              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "both" || "${KERNEL_TARGET}" == "all" ]]; then
+              if [[ "${KERNEL_TARGET}" == "lineageos" || "${KERNEL_TARGET}" == "all" ]]; then
                 echo "| Xiaomi Poco F3 (LineageOS) | alioth | 4.19 | ${K_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
-              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "both" || "${KERNEL_TARGET}" == "all" ]]; then
+              if [[ "${KERNEL_TARGET}" == "e404" || "${KERNEL_TARGET}" == "all" ]]; then
                 echo "| Xiaomi Poco F3 (E404) | alioth | 4.19 | ${E404_BRANCH} | AnyKernel3 | ${KSU_FORK} | $(mark "${SUSFS_ENABLE}") | $(mark "${NOMOUNT_ENABLE}") | $(mark "${REKERNEL_ENABLE}") | $(mark "${BBG_ENABLE}") | $(mark "${DROIDSPACES_ENABLE}") | $(mark "${KPM_ENABLE}") | $(mark "${FGETPRIORITY_ENABLE}") | $(mark "${VPNHIDE_ENABLE}") | $(mark "${RTL8812AU_ENABLE}") |"
               fi
               if [[ "${KERNEL_TARGET}" == "rezadinosaurus" || "${KERNEL_TARGET}" == "all" ]]; then

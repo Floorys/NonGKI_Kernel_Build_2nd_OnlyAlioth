@@ -23,7 +23,6 @@ on:
           - "lineageos"
           - "e404"
           - "rezadinosaurus"
-          - "both"
 
       kernel_branch:
         description: "Ветка ядра LineageOS (sm8250)"

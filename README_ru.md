@@ -71,7 +71,7 @@
 
 При нажатии **Run workflow** можно настроить сборку галочками и выпадающими списками:
 
-- **Цель / ветка**: выбор ядра (`all` — все три, `lineageos`, `e404`, `rezadinosaurus` или `both` — LineageOS+E404) и нужной ветки.
+- **Цель / ветка**: выбор ядра (`all` — все три, `lineageos`, `e404` или `rezadinosaurus`) и нужной ветки.
 - **Менеджер KernelSU (`kernelsu_fork`)**: `bakasu` (по умолчанию), `next`, `xxksu`, `rsuntk`, `sukisu`.
 - **Multi-Manager (`multi_manager`)**: поддержка нескольких менеджеров для **BakaSU** (`BakaSU + Official KSU + KowSU`).
 - **SUSFS (`susfs_enable`)**: встроенные патчи скрытия рута/модулей (`v2.4.0`).  
